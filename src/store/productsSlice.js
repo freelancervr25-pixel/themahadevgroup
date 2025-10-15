@@ -114,6 +114,32 @@ export const searchProductsAsync = createAsyncThunk(
   }
 );
 
+// Async thunk for deleting category (soft delete)
+export const deleteCategoryAsync = createAsyncThunk(
+  "products/deleteCategory",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      const response = await apiService.deleteCategory(categoryId);
+      return { categoryId, response };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for restoring category
+export const restoreCategoryAsync = createAsyncThunk(
+  "products/restoreCategory",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      const response = await apiService.restoreCategory(categoryId);
+      return { categoryId, response };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const productsSlice = createSlice({
   name: "products",
   initialState,
@@ -192,18 +218,67 @@ const productsSlice = createSlice({
       .addCase(searchProductsAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Delete category
+      .addCase(deleteCategoryAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteCategoryAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        const { categoryId } = action.payload;
+        // Update the category to mark as deleted
+        const category = state.categories.find(cat => cat.id === categoryId);
+        if (category) {
+          category.deleted = true;
+          category.deletedAt = new Date().toISOString();
+        }
+        state.error = null;
+      })
+      .addCase(deleteCategoryAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Restore category
+      .addCase(restoreCategoryAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restoreCategoryAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        const { categoryId } = action.payload;
+        // Update the category to mark as restored
+        const category = state.categories.find(cat => cat.id === categoryId);
+        if (category) {
+          category.deleted = false;
+          category.deletedAt = null;
+        }
+        state.error = null;
+      })
+      .addCase(restoreCategoryAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { addProduct, updateProduct, deleteProduct, setProducts, clearError } =
-  productsSlice.actions;
+export const {
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  setProducts,
+  clearError,
+} = productsSlice.actions;
 
 // Selectors
 export const selectAllProducts = (state) => state.products.products;
 export const selectProductById = (state, id) =>
   state.products.products.find((product) => product.id === id);
 export const selectCategories = (state) => state.products.categories;
+export const selectActiveCategories = (state) => 
+  state.products.categories.filter(category => !category.deleted);
+export const selectDeletedCategories = (state) => 
+  state.products.categories.filter(category => category.deleted);
 export const selectProductsLoading = (state) => state.products.loading;
 export const selectProductsError = (state) => state.products.error;
 

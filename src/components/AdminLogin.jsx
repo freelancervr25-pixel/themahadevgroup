@@ -43,7 +43,7 @@ const AdminLogin = () => {
       <div className="admin-login-card">
         <div className="login-header">
           <h1>🔐 Admin Login</h1>
-          <p>Shree Ram Fireworks Admin Panel</p>
+          <p>Fireworks Store Admin Panel</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

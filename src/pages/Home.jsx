@@ -52,7 +52,7 @@ const Home = () => {
     <div className="home-page">
       <div className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">🎆 Shree Ram Fireworks 🎆</h1>
+          <h1 className="hero-title">🎆 Fireworks Store 🎆</h1>
           <p className="hero-subtitle">
             Premium Firecrackers for Every Celebration
           </p>

@@ -13,5 +13,9 @@ export const API_CONFIG = {
     LOAD_PRODUCTS: "/api/load/products",
     LOAD_DASHBOARD: "/api/load/dashboard",
     SEARCH_PRODUCTS: "/api/load/search",
+    
+    // Category management endpoints
+    DELETE_CATEGORY: "/api/categories",
+    RESTORE_CATEGORY: "/api/categories",
   },
 };

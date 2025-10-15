@@ -1,4 +1,4 @@
-# 🎆 Shree Ram Fireworks - Firecracker Cart Website
+# 🎆 Fireworks Store - Firecracker Cart Website
 
 A modern, responsive firecracker shopping website with admin panel, built with React, Redux, and integrated with a Vercel backend API.
 
@@ -193,4 +193,4 @@ For issues or questions:
 
 ---
 
-**Built with ❤️ for Shree Ram Fireworks** 🎆
+**Built with ❤️ for Fireworks Store** 🎆

@@ -28,7 +28,7 @@ export const generateCataloguePDF = async (products) => {
   // Header
   pdf.setFontSize(20);
   pdf.setTextColor(211, 47, 47); // Red color
-  pdf.text("Shree Ram Fireworks", pageWidth / 2, 20, { align: "center" });
+  pdf.text("Fireworks Store", pageWidth / 2, 20, { align: "center" });
 
   pdf.setFontSize(16);
   pdf.setTextColor(251, 192, 45); // Gold color
@@ -84,7 +84,7 @@ export const generateCataloguePDF = async (products) => {
   pdf.setFontSize(10);
   pdf.setTextColor(100, 100, 100);
   pdf.text(
-    "Thank you for choosing Shree Ram Fireworks! 🎆",
+    "Thank you for choosing Fireworks Store! 🎆",
     pageWidth / 2,
     pageHeight - 10,
     { align: "center" }
@@ -102,7 +102,7 @@ export const generateOrderPDF = async (cartItems, customerInfo, totalPrice) => {
   // Header
   pdf.setFontSize(20);
   pdf.setTextColor(211, 47, 47);
-  pdf.text("Shree Ram Fireworks", pageWidth / 2, 20, { align: "center" });
+  pdf.text("Fireworks Store", pageWidth / 2, 20, { align: "center" });
 
   pdf.setFontSize(16);
   pdf.setTextColor(251, 192, 45);
@@ -173,7 +173,7 @@ export const generateOrderPDF = async (cartItems, customerInfo, totalPrice) => {
   pdf.setFontSize(10);
   pdf.setTextColor(100, 100, 100);
   pdf.text(
-    "Thank you for shopping with Shree Ram Fireworks! 🎆",
+    "Thank you for shopping with Fireworks Store! 🎆",
     pageWidth / 2,
     pageHeight - 10,
     { align: "center" }

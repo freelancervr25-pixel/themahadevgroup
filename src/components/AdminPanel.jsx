@@ -8,7 +8,9 @@ import {
   deleteProduct,
 } from "../store/productsSlice";
 import { fileToBase64, validateImageFile } from "../utils/base64Helper";
+import CategoryManagement from "./CategoryManagement";
 import "../styles/admin.css";
+import "../styles/categoryManagement.css";
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
@@ -16,6 +18,7 @@ const AdminPanel = () => {
   const { isLoggedIn, adminUser } = useSelector((state) => state.auth);
   const products = useSelector((state) => state.products.products);
 
+  const [activeTab, setActiveTab] = useState("products");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -179,18 +182,37 @@ const AdminPanel = () => {
       </div>
 
       <div className="admin-content">
-        <div className="admin-actions-bar">
+        {/* Admin Tabs */}
+        <div className="admin-tabs">
           <button
-            className="add-product-button"
-            onClick={() => {
-              resetForm();
-              setEditingProduct(null);
-              setShowAddForm(true);
-            }}
+            className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
+            onClick={() => setActiveTab("products")}
           >
-            ➕ Add New Product
+            📦 Products ({products.length})
+          </button>
+          <button
+            className={`admin-tab ${activeTab === "categories" ? "active" : ""}`}
+            onClick={() => setActiveTab("categories")}
+          >
+            🏷️ Categories
           </button>
         </div>
+
+        {/* Products Tab Content */}
+        {activeTab === "products" && (
+          <>
+            <div className="admin-actions-bar">
+              <button
+                className="add-product-button"
+                onClick={() => {
+                  resetForm();
+                  setEditingProduct(null);
+                  setShowAddForm(true);
+                }}
+              >
+                ➕ Add New Product
+              </button>
+            </div>
 
         {showAddForm && (
           <div className="product-form-container">
@@ -333,56 +355,61 @@ const AdminPanel = () => {
           </div>
         )}
 
-        <div className="products-list">
-          <h2>Products ({products.length})</h2>
-          <div className="products-grid">
-            {products.map((product) => (
-              <div key={product.id} className="admin-product-card">
-                <div className="product-image">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/200x200/d32f2f/ffffff?text=Firework";
-                    }}
-                  />
-                </div>
+            <div className="products-list">
+              <h2>Products ({products.length})</h2>
+              <div className="products-grid">
+                {products.map((product) => (
+                  <div key={product.id} className="admin-product-card">
+                    <div className="product-image">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.src =
+                            "https://via.placeholder.com/200x200/d32f2f/ffffff?text=Firework";
+                        }}
+                      />
+                    </div>
 
-                <div className="product-details">
-                  <h3>{product.name}</h3>
-                  <p className="product-description">{product.description}</p>
+                    <div className="product-details">
+                      <h3>{product.name}</h3>
+                      <p className="product-description">{product.description}</p>
 
-                  <div className="product-pricing">
-                    <span className="current-price">₹{product.price}</span>
-                    <span className="original-price">
-                      ₹{product.originalPrice}
-                    </span>
+                      <div className="product-pricing">
+                        <span className="current-price">₹{product.price}</span>
+                        <span className="original-price">
+                          ₹{product.originalPrice}
+                        </span>
+                      </div>
+
+                      <div className="product-stock">
+                        Stock: {product.stock} units
+                      </div>
+                    </div>
+
+                    <div className="product-actions">
+                      <button
+                        className="edit-button"
+                        onClick={() => handleEdit(product)}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(product.id)}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="product-stock">
-                    Stock: {product.stock} units
-                  </div>
-                </div>
-
-                <div className="product-actions">
-                  <button
-                    className="edit-button"
-                    onClick={() => handleEdit(product)}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="delete-button"
-                    onClick={() => handleDelete(product.id)}
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
+
+        {/* Categories Tab Content */}
+        {activeTab === "categories" && <CategoryManagement />}
       </div>
     </div>
   );

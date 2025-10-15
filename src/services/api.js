@@ -120,9 +120,32 @@ class ApiService {
 
   // Search products
   async searchProducts(query) {
-    return await this.request(`${API_CONFIG.ENDPOINTS.SEARCH_PRODUCTS}?q=${encodeURIComponent(query)}`, {
-      method: "GET",
-    });
+    return await this.request(
+      `${API_CONFIG.ENDPOINTS.SEARCH_PRODUCTS}?q=${encodeURIComponent(query)}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  // Delete category (soft delete)
+  async deleteCategory(categoryId) {
+    return await this.request(
+      `${API_CONFIG.ENDPOINTS.DELETE_CATEGORY}/${categoryId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // Restore category
+  async restoreCategory(categoryId) {
+    return await this.request(
+      `${API_CONFIG.ENDPOINTS.RESTORE_CATEGORY}/${categoryId}/restore`,
+      {
+        method: "PUT",
+      }
+    );
   }
 }
 

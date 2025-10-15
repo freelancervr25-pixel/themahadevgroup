@@ -14,7 +14,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <Link to="/" className="navbar-brand">
           <span className="brand-icon">🎆</span>
-          Shree Ram Fireworks
+          Fireworks Store
         </Link>
 
         <div className="navbar-links">
