@@ -1,7 +1,8 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import apiService from "../services/api";
 
-// Sample firecracker products
-const initialProducts = [
+// Sample firecracker products (fallback)
+const fallbackProducts = [
   {
     id: 1,
     name: "Red Fort Crackers",
@@ -65,9 +66,53 @@ const initialProducts = [
 ];
 
 const initialState = {
-  products: initialProducts,
+  products: fallbackProducts,
+  categories: [],
+  loading: false,
+  error: null,
   nextId: 7,
 };
+
+// Async thunk for loading products
+export const loadProductsAsync = createAsyncThunk(
+  "products/loadProducts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiService.loadProducts();
+      return response;
+    } catch (error) {
+      console.warn("Failed to load products from API, using fallback data");
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for loading categories
+export const loadCategoriesAsync = createAsyncThunk(
+  "products/loadCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiService.loadCategories();
+      return response;
+    } catch (error) {
+      console.warn("Failed to load categories from API");
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for searching products
+export const searchProductsAsync = createAsyncThunk(
+  "products/searchProducts",
+  async (query, { rejectWithValue }) => {
+    try {
+      const response = await apiService.searchProducts(query);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const productsSlice = createSlice({
   name: "products",
@@ -98,15 +143,68 @@ const productsSlice = createSlice({
     setProducts: (state, action) => {
       state.products = action.payload;
     },
+
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Load products
+      .addCase(loadProductsAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadProductsAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload || state.products;
+        state.error = null;
+      })
+      .addCase(loadProductsAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        // Keep fallback products on error
+      })
+      // Load categories
+      .addCase(loadCategoriesAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadCategoriesAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories = action.payload || [];
+        state.error = null;
+      })
+      .addCase(loadCategoriesAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Search products
+      .addCase(searchProductsAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchProductsAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload || state.products;
+        state.error = null;
+      })
+      .addCase(searchProductsAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
-export const { addProduct, updateProduct, deleteProduct, setProducts } =
+export const { addProduct, updateProduct, deleteProduct, setProducts, clearError } =
   productsSlice.actions;
 
 // Selectors
 export const selectAllProducts = (state) => state.products.products;
 export const selectProductById = (state, id) =>
   state.products.products.find((product) => product.id === id);
+export const selectCategories = (state) => state.products.categories;
+export const selectProductsLoading = (state) => state.products.loading;
+export const selectProductsError = (state) => state.products.error;
 
 export default productsSlice.reducer;

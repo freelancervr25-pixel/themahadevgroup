@@ -96,6 +96,34 @@ class ApiService {
       return false;
     }
   }
+
+  // Load categories
+  async loadCategories() {
+    return await this.request(API_CONFIG.ENDPOINTS.LOAD_CATEGORIES, {
+      method: "GET",
+    });
+  }
+
+  // Load products
+  async loadProducts() {
+    return await this.request(API_CONFIG.ENDPOINTS.LOAD_PRODUCTS, {
+      method: "GET",
+    });
+  }
+
+  // Load dashboard data
+  async loadDashboard() {
+    return await this.request(API_CONFIG.ENDPOINTS.LOAD_DASHBOARD, {
+      method: "GET",
+    });
+  }
+
+  // Search products
+  async searchProducts(query) {
+    return await this.request(`${API_CONFIG.ENDPOINTS.SEARCH_PRODUCTS}?q=${encodeURIComponent(query)}`, {
+      method: "GET",
+    });
+  }
 }
 
 // Create and export a singleton instance
