@@ -1,10 +1,23 @@
 // Helper function to convert file to base64
-export const fileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
+import { compressImage } from './imageCompression';
+
+export const fileToBase64 = (file, compress = true) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (compress) {
+        // Use compression for better API performance
+        const compressedBase64 = await compressImage(file, 800, 0.7);
+        resolve(compressedBase64);
+      } else {
+        // Use original file without compression
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+      }
+    } catch (error) {
+      reject(error);
+    }
   });
 };
 

@@ -11,6 +11,7 @@ import {
   deleteProductAsync,
 } from "../store/productsSlice";
 import { fileToBase64, validateImageFile } from "../utils/base64Helper";
+import { getFileSizeKB, getBase64SizeKB, getCompressionRatio } from "../utils/imageCompression";
 import CategoryManagement from "./CategoryManagement";
 import ProductImage from "./ProductImage";
 import "../styles/admin.css";
@@ -35,6 +36,7 @@ const AdminPanel = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [removeImage, setRemoveImage] = useState(false);
+  const [compressionInfo, setCompressionInfo] = useState(null);
   const [errors, setErrors] = useState({});
 
   React.useEffect(() => {
@@ -59,7 +61,7 @@ const AdminPanel = () => {
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const validation = validateImageFile(file);
@@ -76,6 +78,23 @@ const AdminPanel = () => {
         ...prev,
         image: "",
       }));
+      setRemoveImage(false); // If new image is uploaded, don't remove existing
+
+      // Show compression info
+      try {
+        const originalSize = getFileSizeKB(file);
+        const compressedBase64 = await fileToBase64(file, true);
+        const compressedSize = getBase64SizeKB(compressedBase64);
+        const compressionRatio = getCompressionRatio(originalSize, compressedSize);
+        
+        setCompressionInfo({
+          originalSize,
+          compressedSize,
+          compressionRatio
+        });
+      } catch (error) {
+        console.error('Error calculating compression info:', error);
+      }
     }
   };
 
@@ -133,18 +152,17 @@ const AdminPanel = () => {
       if (editingProduct) {
         // Use async update for backend integration
         try {
-          await dispatch(updateProductAsync({ 
-            productId: editingProduct.id, 
-            productData: {
-              name: productData.name,
-              description: productData.description,
-              price: productData.price,
-              stock: productData.stock,
-              image: productData.image,
-              category: formData.category,
-              inStock: productData.stock > 0
-            }
-          })).unwrap();
+            await dispatch(updateProductAsync({
+              productId: editingProduct.id,
+              productData: {
+                name: productData.name,
+                description: productData.description,
+                price: productData.price,
+                image: productData.image,
+                category: formData.category,
+                inStock: productData.stock > 0
+              }
+            })).unwrap();
           setEditingProduct(null);
           alert("Product updated successfully!");
         } catch (error) {
@@ -153,15 +171,14 @@ const AdminPanel = () => {
       } else {
         // Use async create for backend integration
         try {
-          await dispatch(createProductAsync({
-            name: productData.name,
-            description: productData.description,
-            price: productData.price,
-            stock: productData.stock,
-            image: productData.image,
-            category: formData.category,
-            inStock: productData.stock > 0
-          })).unwrap();
+            await dispatch(createProductAsync({
+              name: productData.name,
+              description: productData.description,
+              price: productData.price,
+              image: productData.image,
+              category: formData.category,
+              inStock: productData.stock > 0
+            })).unwrap();
           alert("Product created successfully!");
         } catch (error) {
           alert(`Error creating product: ${error}`);
@@ -186,6 +203,7 @@ const AdminPanel = () => {
     });
     setImageFile(null);
     setRemoveImage(false);
+    setCompressionInfo(null);
     setErrors({});
   };
 
@@ -432,6 +450,30 @@ const AdminPanel = () => {
                         <p><strong>Size:</strong> {(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
                         <p><strong>Type:</strong> {imageFile.type}</p>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Compression Info */}
+                  {compressionInfo && (
+                    <div className="compression-info">
+                      <h4>📊 Image Compression Info</h4>
+                      <div className="compression-stats">
+                        <div className="stat-item">
+                          <span className="stat-label">Original Size:</span>
+                          <span className="stat-value">{compressionInfo.originalSize} KB</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-label">Compressed Size:</span>
+                          <span className="stat-value">{compressionInfo.compressedSize} KB</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-label">Compression:</span>
+                          <span className="stat-value success">{compressionInfo.compressionRatio}% smaller</span>
+                        </div>
+                      </div>
+                      <p className="compression-note">
+                        ✅ Image will be automatically compressed for optimal API performance
+                      </p>
                     </div>
                   )}
                 </div>

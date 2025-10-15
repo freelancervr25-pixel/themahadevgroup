@@ -423,6 +423,58 @@
   border-color: #b71c1c;
 }
 
+/* Compression Info */
+.compression-info {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.compression-info h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.compression-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+}
+
+.stat-value.success {
+  color: #28a745;
+}
+
+.compression-note {
+  margin: 0;
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
 .form-actions {
   display: flex;
   gap: 15px;

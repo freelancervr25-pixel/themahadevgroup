@@ -146,7 +146,7 @@ class ApiService {
         name: product.name,
         price: product.price,
         originalPrice: product.price * 1.2, // Add 20% markup as original price
-        stock: product.stock,
+        stock: product.stock || (product.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(product.image),
         description: product.description,
         category: product.category,
@@ -179,7 +179,7 @@ class ApiService {
         name: product.name,
         price: product.price,
         originalPrice: product.price * 1.2, // Add 20% markup as original price
-        stock: product.stock,
+        stock: product.stock || (product.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(product.image),
         description: product.description,
         category: product.category,
@@ -225,7 +225,7 @@ class ApiService {
         name: createdProduct.name,
         price: createdProduct.price,
         originalPrice: createdProduct.price * 1.2, // Add 20% markup as original price
-        stock: createdProduct.stock,
+        stock: createdProduct.stock || (createdProduct.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(createdProduct.image),
         description: createdProduct.description,
         category: createdProduct.category,
@@ -254,7 +254,7 @@ class ApiService {
         name: updatedProduct.name,
         price: updatedProduct.price,
         originalPrice: updatedProduct.price * 1.2, // Add 20% markup as original price
-        stock: updatedProduct.stock,
+        stock: updatedProduct.stock || (updatedProduct.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(updatedProduct.image),
         description: updatedProduct.description,
         category: updatedProduct.category,
@@ -290,7 +290,7 @@ class ApiService {
         name: product.name,
         price: product.price,
         originalPrice: product.price * 1.2,
-        stock: product.stock,
+        stock: product.stock || (product.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(product.image),
         description: product.description,
         category: product.category,
@@ -315,7 +315,7 @@ class ApiService {
         name: product.name,
         price: product.price,
         originalPrice: product.price * 1.2,
-        stock: product.stock,
+        stock: product.stock || (product.inStock ? 100 : 0), // Convert inStock to stock for frontend
         image: getProductImage(product.image),
         description: product.description,
         category: product.category,
