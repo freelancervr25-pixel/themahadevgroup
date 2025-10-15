@@ -228,7 +228,7 @@ const productsSlice = createSlice({
         state.loading = false;
         const { categoryId } = action.payload;
         // Update the category to mark as deleted
-        const category = state.categories.find(cat => cat.id === categoryId);
+        const category = state.categories.find((cat) => cat.id === categoryId);
         if (category) {
           category.deleted = true;
           category.deletedAt = new Date().toISOString();
@@ -248,7 +248,7 @@ const productsSlice = createSlice({
         state.loading = false;
         const { categoryId } = action.payload;
         // Update the category to mark as restored
-        const category = state.categories.find(cat => cat.id === categoryId);
+        const category = state.categories.find((cat) => cat.id === categoryId);
         if (category) {
           category.deleted = false;
           category.deletedAt = null;
@@ -275,10 +275,10 @@ export const selectAllProducts = (state) => state.products.products;
 export const selectProductById = (state, id) =>
   state.products.products.find((product) => product.id === id);
 export const selectCategories = (state) => state.products.categories;
-export const selectActiveCategories = (state) => 
-  state.products.categories.filter(category => !category.deleted);
-export const selectDeletedCategories = (state) => 
-  state.products.categories.filter(category => category.deleted);
+export const selectActiveCategories = (state) =>
+  state.products.categories.filter((category) => !category.deleted);
+export const selectDeletedCategories = (state) =>
+  state.products.categories.filter((category) => category.deleted);
 export const selectProductsLoading = (state) => state.products.loading;
 export const selectProductsError = (state) => state.products.error;
 
