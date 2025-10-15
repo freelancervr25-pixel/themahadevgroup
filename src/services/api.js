@@ -99,16 +99,34 @@ class ApiService {
 
   // Load categories
   async loadCategories() {
-    return await this.request(API_CONFIG.ENDPOINTS.LOAD_CATEGORIES, {
+    const response = await this.request(API_CONFIG.ENDPOINTS.LOAD_CATEGORIES, {
       method: "GET",
     });
+    // Handle backend response structure: {success: true, data: [...], count: 5, message: "..."}
+    return response.success ? response.data : response;
   }
 
   // Load products
   async loadProducts() {
-    return await this.request(API_CONFIG.ENDPOINTS.LOAD_PRODUCTS, {
+    const response = await this.request(API_CONFIG.ENDPOINTS.LOAD_PRODUCTS, {
       method: "GET",
     });
+    // Handle backend response structure: {success: true, data: [...], count: 5, message: "..."}
+    if (response.success && response.data) {
+      // Transform backend data to match frontend structure
+      return response.data.map(product => ({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.price * 1.2, // Add 20% markup as original price
+        stock: product.stock,
+        image: product.image || "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
+        description: product.description,
+        category: product.category,
+        inStock: product.inStock
+      }));
+    }
+    return response;
   }
 
   // Load dashboard data
@@ -120,12 +138,28 @@ class ApiService {
 
   // Search products
   async searchProducts(query) {
-    return await this.request(
+    const response = await this.request(
       `${API_CONFIG.ENDPOINTS.SEARCH_PRODUCTS}?q=${encodeURIComponent(query)}`,
       {
         method: "GET",
       }
     );
+    // Handle backend response structure: {success: true, data: [...], count: 5, message: "..."}
+    if (response.success && response.data) {
+      // Transform backend data to match frontend structure
+      return response.data.map(product => ({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.price * 1.2, // Add 20% markup as original price
+        stock: product.stock,
+        image: product.image || "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
+        description: product.description,
+        category: product.category,
+        inStock: product.inStock
+      }));
+    }
+    return response;
   }
 
   // Delete category (soft delete)
