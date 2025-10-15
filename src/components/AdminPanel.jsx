@@ -27,7 +27,6 @@ const AdminPanel = () => {
     originalPrice: "",
     stock: "",
     description: "",
-    image: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [errors, setErrors] = useState({});
@@ -86,7 +85,7 @@ const AdminPanel = () => {
       newErrors.stock = "Valid stock quantity is required";
     if (!formData.description.trim())
       newErrors.description = "Description is required";
-    if (!formData.image && !imageFile) newErrors.image = "Image is required";
+    if (!imageFile) newErrors.image = "Image file is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,19 +97,15 @@ const AdminPanel = () => {
     if (!validateForm()) return;
 
     try {
-      let imageUrl = formData.image;
-
-      if (imageFile) {
-        const base64 = await fileToBase64(imageFile);
-        imageUrl = base64;
-      }
+      // Convert uploaded image to base64
+      const base64Image = await fileToBase64(imageFile);
 
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
         originalPrice: parseFloat(formData.originalPrice),
         stock: parseInt(formData.stock),
-        image: imageUrl,
+        image: base64Image, // Always use uploaded image as base64
       };
 
       if (editingProduct) {
@@ -134,7 +129,6 @@ const AdminPanel = () => {
       originalPrice: "",
       stock: "",
       description: "",
-      image: "",
     });
     setImageFile(null);
     setErrors({});
@@ -148,9 +142,8 @@ const AdminPanel = () => {
       originalPrice: product.originalPrice.toString(),
       stock: product.stock.toString(),
       description: product.description,
-      image: product.image,
     });
-    setImageFile(null);
+    setImageFile(null); // Clear previous image file
     setShowAddForm(true);
   };
 
@@ -303,33 +296,31 @@ const AdminPanel = () => {
                   <label>Product Image *</label>
                   <div className="image-input-container">
                     <input
-                      type="url"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      placeholder="Enter image URL"
-                    />
-                    <span className="or-text">OR</span>
-                    <input
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
+                      className="file-input"
                     />
+                    <div className="file-input-info">
+                      <p>📁 Select an image file (JPG, PNG, GIF, WebP)</p>
+                      <p className="file-size-info">Max size: 5MB</p>
+                    </div>
                   </div>
                   {errors.image && (
                     <span className="error">{errors.image}</span>
                   )}
 
-                  {(formData.image || imageFile) && (
+                  {imageFile && (
                     <div className="image-preview">
                       <img
-                        src={
-                          imageFile
-                            ? URL.createObjectURL(imageFile)
-                            : formData.image
-                        }
+                        src={URL.createObjectURL(imageFile)}
                         alt="Preview"
                       />
+                      <div className="image-info">
+                        <p><strong>File:</strong> {imageFile.name}</p>
+                        <p><strong>Size:</strong> {(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p><strong>Type:</strong> {imageFile.type}</p>
+                      </div>
                     </div>
                   )}
                 </div>
