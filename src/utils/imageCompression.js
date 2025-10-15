@@ -1,10 +1,10 @@
 // Image compression utility for API requests
 export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
   return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     const img = new Image();
-    
+
     img.onload = () => {
       try {
         // Calculate new dimensions
@@ -13,27 +13,27 @@ export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         // Draw and compress
         ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+
         // Clean up
         URL.revokeObjectURL(img.src);
-        
+
         resolve(compressedDataUrl);
       } catch (error) {
         reject(error);
       }
     };
-    
+
     img.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error("Failed to load image"));
     };
-    
+
     img.src = URL.createObjectURL(file);
   });
 };

@@ -106,13 +106,10 @@ const AdminPanel = () => {
       newErrors.price = "Valid price is required";
     if (!formData.originalPrice || formData.originalPrice <= 0)
       newErrors.originalPrice = "Valid original price is required";
-    if (!formData.stock || formData.stock < 0)
+    if (formData.stock === "" || formData.stock === null || Number(formData.stock) < 0)
       newErrors.stock = "Valid stock quantity is required";
-    if (!formData.description.trim())
-      newErrors.description = "Description is required";
-    // Image is only required for new products, not when editing
-    if (!editingProduct && !imageFile) newErrors.image = "Image file is required";
-    // If editing and no new image uploaded and not removing image, keep existing
+    // description optional
+    // image optional for both create and edit
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -137,8 +134,8 @@ const AdminPanel = () => {
           imageData = undefined;
         }
       } else {
-        // When creating new product, always require image
-        imageData = await fileToBase64(imageFile);
+        // Creating new product: image optional
+        imageData = imageFile ? await fileToBase64(imageFile) : undefined;
       }
 
       const productData = {
@@ -156,7 +153,8 @@ const AdminPanel = () => {
               productId: editingProduct.id,
               productData: {
                 name: productData.name,
-                description: productData.description,
+                // description optional
+                description: productData.description?.trim() ? productData.description : undefined,
                 price: productData.price,
                 image: productData.image,
                 category: formData.category,
@@ -173,7 +171,8 @@ const AdminPanel = () => {
         try {
             await dispatch(createProductAsync({
               name: productData.name,
-              description: productData.description,
+              // description optional
+              description: productData.description?.trim() ? productData.description : undefined,
               price: productData.price,
               image: productData.image,
               category: formData.category,
@@ -359,7 +358,7 @@ const AdminPanel = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Description *</label>
+                  <label>Description (optional)</label>
                   <textarea
                     name="description"
                     value={formData.description}
@@ -392,7 +391,7 @@ const AdminPanel = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Product Image {!editingProduct && "*"}</label>
+                  <label>Product Image (optional)</label>
                   
                   {/* Show current image when editing */}
                   {editingProduct && !imageFile && !removeImage && (
