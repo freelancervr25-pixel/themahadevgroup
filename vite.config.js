@@ -6,12 +6,12 @@ export default defineConfig({
   base: "/",
   server: {
     proxy: {
-      '/api': {
-        target: 'https://express-js-on-vercel-lovat-eight.vercel.app',
+      "/mahadev": {
+        target: "https://simplysales.postick.co.in",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
-      }
-    }
-  }
+        rewrite: (path) => path.replace(/^\/mahadev/, "/mahadev"),
+      },
+    },
+  },
 });

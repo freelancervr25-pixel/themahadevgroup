@@ -8,6 +8,7 @@ import {
   searchProductsAsync,
 } from "../store/productsSlice";
 import { generateCataloguePDF } from "../utils/pdfHelpers";
+import apiService from "../services/api";
 import ProductCard from "../components/ProductCard";
 import FloatingCartButton from "../components/FloatingCartButton";
 import "../styles/home.css";
@@ -26,7 +27,14 @@ const Home = () => {
 
   const handleDownloadCatalogue = async () => {
     try {
-      await generateCataloguePDF(products);
+      // Always fetch fresh products for the PDF to ensure content
+      const latest = await apiService.loadHomeProducts();
+      const list = Array.isArray(latest) && latest.length ? latest : products;
+      if (!list || list.length === 0) {
+        alert("No products available to include in the catalogue.");
+        return;
+      }
+      await generateCataloguePDF(list);
     } catch (error) {
       console.error("Error generating catalogue PDF:", error);
       alert("Error generating catalogue PDF. Please try again.");
@@ -52,7 +60,7 @@ const Home = () => {
     <div className="home-page">
       <div className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">🎆 Fireworks Store 🎆</h1>
+          <h1 className="hero-title">🎆 Fireworks 🎆</h1>
           <p className="hero-subtitle">
             Premium Firecrackers for Every Celebration
           </p>
@@ -62,6 +70,14 @@ const Home = () => {
           >
             📘 Download Full Catalogue
           </button>
+          <div
+            className="coupon-highlight"
+            role="note"
+            aria-label="Coupon offer"
+          >
+            Use code <strong>FIRSTSALE15</strong> for an extra{" "}
+            <strong>15% OFF</strong>
+          </div>
         </div>
       </div>
 

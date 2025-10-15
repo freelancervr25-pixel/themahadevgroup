@@ -1,11 +1,13 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../store/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, increaseQty, decreaseQty } from "../store/cartSlice";
 import ProductImage from "./ProductImage";
 import "../styles/home.css";
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+  const cartItem = cartItems.find((i) => i.id === product.id);
 
   const handleAddToCart = () => {
     dispatch(addToCart(product));
@@ -45,13 +47,33 @@ const ProductCard = ({ product }) => {
 
         <div className="product-stock">Stock: {product.stock} units</div>
 
-        <button
-          className="add-to-cart-btn"
-          onClick={handleAddToCart}
-          disabled={product.stock === 0}
-        >
-          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-        </button>
+        {cartItem ? (
+          <div className="qty-controls">
+            <button
+              className="qty-button"
+              onClick={() => dispatch(decreaseQty(product.id))}
+              disabled={cartItem.quantity <= 1}
+            >
+              –
+            </button>
+            <span className="qty-value">{cartItem.quantity}</span>
+            <button
+              className="qty-button"
+              onClick={() => dispatch(increaseQty(product.id))}
+              disabled={cartItem.quantity >= product.stock}
+            >
+              +
+            </button>
+          </div>
+        ) : (
+          <button
+            className="add-to-cart-btn"
+            onClick={handleAddToCart}
+            disabled={product.stock === 0}
+          >
+            {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+          </button>
+        )}
       </div>
     </div>
   );

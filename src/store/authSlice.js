@@ -50,7 +50,8 @@ const authSlice = createSlice({
       const token = localStorage.getItem("adminToken");
       if (token) {
         state.isLoggedIn = true;
-        state.adminUser = { username: "mahadev", role: "admin" };
+        const username = localStorage.getItem("adminUsername") || "admin";
+        state.adminUser = { username, role: "admin" };
         apiService.setToken(token);
       }
     },

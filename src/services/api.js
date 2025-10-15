@@ -86,16 +86,160 @@ class ApiService {
 
   // Admin login
   async adminLogin(credentials) {
-    const response = await this.request(API_CONFIG.ENDPOINTS.ADMIN_LOGIN, {
+    // Endpoint: use proxy in dev to avoid CORS, absolute in prod
+    const endpoint = "https://simplysales.postick.co.in/mahadev/login";
+
+    // Send exact JSON structure required by backend
+    const payload = {
+      data: {
+        username: credentials.username,
+        password: credentials.password,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
       method: "POST",
-      body: JSON.stringify(credentials),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-    if (response.token) {
-      this.setToken(response.token);
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Login failed");
     }
 
-    return response;
+    // Only proceed if error is "False" and we have required fields
+    if (String(data?.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Login failed");
+    }
+
+    if (!data?.admin_token || !data?.admin_data?.id) {
+      throw new Error(
+        "Invalid login response: missing admin_token or admin_data"
+      );
+    }
+
+    // Store the admin token and data
+    this.setToken(data.admin_token);
+    try {
+      localStorage.setItem(
+        "adminUsername",
+        data.admin_data.username || credentials.username
+      );
+      localStorage.setItem("adminId", String(data.admin_data.id));
+      localStorage.setItem("adminAuthToken", String(data.admin_token));
+    } catch {}
+
+    return { success: true, token: data.admin_token, raw: data };
+  }
+
+  // Load admin products (requires admin_id and authtoken from login)
+  async loadAdminProducts() {
+    const adminId = localStorage.getItem("adminId");
+    const adminToken = localStorage.getItem("adminAuthToken");
+    if (!adminId || !adminToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/load_product";
+
+    const body = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminToken,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to load products");
+    }
+
+    // Some APIs return error flag as string
+    if (data?.error && String(data.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Failed to load products");
+    }
+
+    const products = data?.products || data?.data || [];
+    // Normalize shape for frontend (preserve base64 images)
+    return products.map((p) => ({
+      id:
+        p.id ||
+        p._id ||
+        p.product_id ||
+        p.sku ||
+        Math.random().toString(36).slice(2),
+      name: p.name || p.product_name || "Unnamed",
+      price: Number(p.current_price ?? p.price ?? p.sale_price ?? 0),
+      originalPrice: Number(
+        p.original_price ??
+          p.mrp ??
+          (p.current_price
+            ? p.current_price * 1.2
+            : p.price
+            ? p.price * 1.2
+            : 0)
+      ),
+      stock: Number(p.stock ?? p.quantity ?? (p.inStock ? 100 : 0) ?? 0),
+      // If it's base64 (data:image/...), keep as is
+      image:
+        typeof p.image === "string" && p.image.startsWith("data:image/")
+          ? p.image
+          : getProductImage(p.image || p.image_url || p.thumbnail || null),
+      description: p.description || p.short_description || "",
+      category: p.category || p.category_name || "general",
+      status: p.status || "active",
+      inStock:
+        p.inStock !== undefined
+          ? !!p.inStock
+          : Number(p.stock ?? p.quantity ?? 0) > 0,
+    }));
+  }
+
+  // Load active products for Home (public, no auth)
+  async loadHomeProducts() {
+    const endpoint = "https://simplysales.postick.co.in/mahadev/home_products";
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: {} }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to load products");
+    }
+    if (
+      typeof data?.error !== "undefined" &&
+      String(data.error).toLowerCase() !== "false"
+    ) {
+      throw new Error(data?.message || "Failed to load products");
+    }
+
+    const products = data?.products || [];
+    return products.map((p) => ({
+      id: p.id || Math.random().toString(36).slice(2),
+      name: p.name || "Unnamed",
+      price: Number(p.current_price ?? p.price ?? 0),
+      originalPrice: Number(
+        p.original_price ?? (p.current_price ? p.current_price * 1.2 : 0)
+      ),
+      stock: Number(p.stock ?? 0),
+      image:
+        typeof p.image === "string" && p.image.startsWith("data:image/")
+          ? p.image
+          : getProductImage(p.image || null),
+      description: p.description || "",
+      category: p.category || "general",
+      inStock: Number(p.stock ?? 0) > 0,
+    }));
   }
 
   // Admin logout
@@ -209,69 +353,194 @@ class ApiService {
     );
   }
 
-  // Create product
+  // Create product (new PHP API)
   async createProduct(productData) {
-    const response = await this.request(API_CONFIG.ENDPOINTS.CREATE_PRODUCT, {
+    const adminId = localStorage.getItem("adminId");
+    const adminToken = localStorage.getItem("adminAuthToken");
+    if (!adminId || !adminToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = import.meta.env?.DEV
+      ? "/mahadev/add_product"
+      : "https://simplysales.postick.co.in/mahadev/add_product";
+
+    // Map frontend fields to backend expected keys
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminToken,
+        name: productData.name,
+        category: productData.category,
+        current_price: Number(productData.price ?? 0),
+        original_price: Number(
+          productData.originalPrice ?? productData.price ?? 0
+        ),
+        stock: Number(productData.stock ?? 0),
+        status: productData.status || "active",
+        image: productData.image ?? null, // base64 or null
+        description: productData.description || "",
+      },
+    };
+
+    const resp = await fetch(endpoint, {
       method: "POST",
-      body: JSON.stringify(productData),
+      // Use a simple request to avoid CORS preflight (no custom headers)
+      body: JSON.stringify(payload),
     });
-
-    // Handle backend response structure
-    if (response.success && response.data) {
-      // Transform the created product data to match frontend structure
-      const createdProduct = response.data;
-      return {
-        id: createdProduct._id,
-        name: createdProduct.name,
-        price: createdProduct.price,
-        originalPrice: createdProduct.price * 1.2, // Add 20% markup as original price
-        stock: createdProduct.stock || (createdProduct.inStock ? 100 : 0), // Convert inStock to stock for frontend
-        image: getProductImage(createdProduct.image),
-        description: createdProduct.description,
-        category: createdProduct.category,
-        inStock: createdProduct.inStock,
-      };
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to create product");
     }
-    return response;
+
+    if (data?.error && String(data.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Failed to create product");
+    }
+
+    // Construct a product object for our frontend
+    return {
+      id: Math.random().toString(36).slice(2),
+      name: productData.name,
+      price: Number(productData.price ?? 0),
+      originalPrice: Number(
+        productData.originalPrice ?? productData.price ?? 0
+      ),
+      stock: Number(productData.stock ?? 0),
+      image: getProductImage(productData.image ?? null),
+      description: productData.description || "",
+      category: productData.category,
+      inStock: Number(productData.stock ?? 0) > 0,
+    };
   }
 
-  // Update product
+  // Update product (new PHP API)
   async updateProduct(productId, productData) {
-    const response = await this.request(
-      `${API_CONFIG.ENDPOINTS.UPDATE_PRODUCT}/${productId}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(productData),
-      }
-    );
-
-    // Handle backend response structure
-    if (response.success && response.data) {
-      // Transform the updated product data to match frontend structure
-      const updatedProduct = response.data;
-      return {
-        id: updatedProduct._id,
-        name: updatedProduct.name,
-        price: updatedProduct.price,
-        originalPrice: updatedProduct.price * 1.2, // Add 20% markup as original price
-        stock: updatedProduct.stock || (updatedProduct.inStock ? 100 : 0), // Convert inStock to stock for frontend
-        image: getProductImage(updatedProduct.image),
-        description: updatedProduct.description,
-        category: updatedProduct.category,
-        inStock: updatedProduct.inStock,
-      };
+    const adminId = localStorage.getItem("adminId");
+    const adminToken = localStorage.getItem("adminAuthToken");
+    if (!adminId || !adminToken) {
+      throw new Error("Missing admin credentials. Please login again.");
     }
-    return response;
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/edit_product";
+
+    // Build payload; only include image if explicitly provided (base64 or null means remove not supported here)
+    const data = {
+      id: productId,
+      name: productData.name,
+      category: productData.category,
+      current_price: Number(productData.price ?? 0),
+      original_price: Number(
+        productData.originalPrice ?? productData.price ?? 0
+      ),
+      stock: Number(productData.stock ?? 0),
+      description: productData.description || "",
+    };
+    if (typeof productData.image !== "undefined") {
+      data.image = productData.image; // send base64 when provided
+    }
+
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminToken,
+        ...data,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const response = await resp.json();
+    if (!resp.ok) {
+      throw new Error(response?.message || "Failed to update product");
+    }
+    if (response?.error && String(response.error).toLowerCase() !== "false") {
+      throw new Error(response?.message || "Failed to update product");
+    }
+
+    // Return normalized product for frontend
+    return {
+      id: productId,
+      name: data.name,
+      price: data.current_price,
+      originalPrice: data.original_price,
+      stock: data.stock,
+      image:
+        typeof data.image === "string" && data.image.startsWith("data:image/")
+          ? data.image
+          : getProductImage(productData.image ?? null),
+      description: data.description,
+      category: data.category,
+      inStock: Number(data.stock) > 0,
+    };
   }
 
-  // Delete product
+  // Delete product (soft delete via PHP API)
   async deleteProduct(productId) {
-    return await this.request(
-      `${API_CONFIG.ENDPOINTS.DELETE_PRODUCT}/${productId}`,
-      {
-        method: "DELETE",
-      }
-    );
+    const adminId = localStorage.getItem("adminId");
+    const adminToken = localStorage.getItem("adminAuthToken");
+    if (!adminId || !adminToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/delete_product";
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminToken,
+        id: productId,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const response = await resp.json();
+    if (!resp.ok) {
+      throw new Error(response?.message || "Failed to delete product");
+    }
+    if (response?.error && String(response.error).toLowerCase() !== "false") {
+      throw new Error(response?.message || "Failed to delete product");
+    }
+    return { success: true, deletedId: productId };
+  }
+
+  // Create order (public endpoint)
+  async createOrder({ userName, userMobile, couponCode, cartItems }) {
+    const endpoint = "https://simplysales.postick.co.in/mahadev/create_order";
+
+    // Send raw JSON with { data: {...} } so PHP can read $_POST['data'] after json_decode
+    const payload = {
+      data: {
+        user_name: userName,
+        user_mobile: userMobile,
+        coupon_code: couponCode || "",
+        cart_items: (cartItems || []).map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          qty: Number(item.quantity || item.qty || 1),
+        })),
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to create order");
+    }
+    if (String(data?.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Failed to create order");
+    }
+    return data.order_summary || data.data || data;
   }
 
   // Get product by ID

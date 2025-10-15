@@ -18,34 +18,28 @@ const Navbar = () => {
         </Link>
 
         <div className="navbar-links">
-          <Link
-            to="/"
-            className={`navbar-link ${
-              location.pathname === "/" ? "active" : ""
-            }`}
-          >
-            Home
-          </Link>
-
-          {isLoggedIn ? (
-            <Link
-              to="/admin"
-              className={`navbar-link ${
-                location.pathname === "/admin" ? "active" : ""
-              }`}
-            >
-              Admin Panel
-            </Link>
-          ) : (
-            <Link
-              to="/admin-login"
-              className={`navbar-link ${
-                location.pathname === "/admin-login" ? "active" : ""
-              }`}
-            >
-              Admin Login
-            </Link>
+          {isLoggedIn && (
+            <>
+              <Link
+                to="/"
+                className={`navbar-link ${
+                  location.pathname === "/" ? "active" : ""
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/admin"
+                className={`navbar-link ${
+                  location.pathname === "/admin" ? "active" : ""
+                }`}
+              >
+                Admin Panel
+              </Link>
+            </>
           )}
+
+          {/* No admin login link when not logged in */}
 
           <Link to="/checkout" className="navbar-link cart-link">
             <span className="cart-icon">🛒</span>

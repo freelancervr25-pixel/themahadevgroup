@@ -1,72 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiService from "../services/api";
 
-// Sample firecracker products (fallback)
-const fallbackProducts = [
-  {
-    id: 1,
-    name: "Red Fort Crackers",
-    price: 150,
-    originalPrice: 200,
-    stock: 50,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "Premium red fort crackers with amazing sound effects",
-  },
-  {
-    id: 2,
-    name: "Golden Sparklers",
-    price: 80,
-    originalPrice: 120,
-    stock: 100,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "Beautiful golden sparklers for celebrations",
-  },
-  {
-    id: 3,
-    name: "Rocket Fireworks",
-    price: 200,
-    originalPrice: 250,
-    stock: 30,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "High-flying rocket fireworks with colorful bursts",
-  },
-  {
-    id: 4,
-    name: "Flower Pots",
-    price: 120,
-    originalPrice: 150,
-    stock: 75,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "Colorful flower pot fireworks",
-  },
-  {
-    id: 5,
-    name: "Chakri Wheels",
-    price: 90,
-    originalPrice: 110,
-    stock: 60,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "Spinning chakri wheels with bright lights",
-  },
-  {
-    id: 6,
-    name: "Bomb Crackers",
-    price: 180,
-    originalPrice: 220,
-    stock: 40,
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
-    description: "Loud bomb crackers for festive celebrations",
-  },
-];
+// No local fallback products; rely on backend-loaded data
 
 const initialState = {
-  products: fallbackProducts,
+  products: [],
   categories: [],
   loading: false,
   error: null,
@@ -78,10 +16,9 @@ export const loadProductsAsync = createAsyncThunk(
   "products/loadProducts",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiService.loadProducts();
+      const response = await apiService.loadHomeProducts();
       return response;
     } catch (error) {
-      console.warn("Failed to load products from API, using fallback data");
       return rejectWithValue(error.message);
     }
   }
@@ -185,6 +122,19 @@ export const loadProductsByCategoryAsync = createAsyncThunk(
   async (categoryName, { rejectWithValue }) => {
     try {
       const response = await apiService.loadProductsByCategory(categoryName);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Load admin products (requires admin login context)
+export const loadAdminProductsAsync = createAsyncThunk(
+  "products/loadAdminProducts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiService.loadAdminProducts();
       return response;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -374,6 +324,22 @@ const productsSlice = createSlice({
         state.error = null;
       })
       .addCase(loadProductsByCategoryAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Load admin products
+    builder
+      .addCase(loadAdminProductsAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadAdminProductsAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload || state.products;
+        state.error = null;
+      })
+      .addCase(loadAdminProductsAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
