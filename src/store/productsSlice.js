@@ -140,6 +140,58 @@ export const restoreCategoryAsync = createAsyncThunk(
   }
 );
 
+// Async thunk for updating product
+export const updateProductAsync = createAsyncThunk(
+  "products/updateProduct",
+  async ({ productId, productData }, { rejectWithValue }) => {
+    try {
+      const response = await apiService.updateProduct(productId, productData);
+      return { productId, updatedProduct: response };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for creating product
+export const createProductAsync = createAsyncThunk(
+  "products/createProduct",
+  async (productData, { rejectWithValue }) => {
+    try {
+      const response = await apiService.createProduct(productData);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for deleting product
+export const deleteProductAsync = createAsyncThunk(
+  "products/deleteProduct",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const response = await apiService.deleteProduct(productId);
+      return { productId, response };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for loading products by category
+export const loadProductsByCategoryAsync = createAsyncThunk(
+  "products/loadProductsByCategory",
+  async (categoryName, { rejectWithValue }) => {
+    try {
+      const response = await apiService.loadProductsByCategory(categoryName);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const productsSlice = createSlice({
   name: "products",
   initialState,
@@ -256,6 +308,68 @@ const productsSlice = createSlice({
         state.error = null;
       })
       .addCase(restoreCategoryAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update product
+      .addCase(updateProductAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProductAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        const { productId, updatedProduct } = action.payload;
+        // Update the product in the products array
+        const index = state.products.findIndex(product => product.id === productId);
+        if (index !== -1) {
+          state.products[index] = updatedProduct;
+        }
+        state.error = null;
+      })
+      .addCase(updateProductAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Create product
+      .addCase(createProductAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createProductAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products.push(action.payload);
+        state.error = null;
+      })
+      .addCase(createProductAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete product
+      .addCase(deleteProductAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteProductAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        const { productId } = action.payload;
+        state.products = state.products.filter(product => product.id !== productId);
+        state.error = null;
+      })
+      .addCase(deleteProductAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Load products by category
+      .addCase(loadProductsByCategoryAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadProductsByCategoryAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload || state.products;
+        state.error = null;
+      })
+      .addCase(loadProductsByCategoryAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

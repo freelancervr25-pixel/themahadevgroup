@@ -25,5 +25,23 @@ export const API_CONFIG = {
     // Category management endpoints
     DELETE_CATEGORY: "/api/categories",
     RESTORE_CATEGORY: "/api/categories",
+    
+    // Product management endpoints
+    CREATE_PRODUCT: "/api/products",
+    UPDATE_PRODUCT: "/api/products",
+    DELETE_PRODUCT: "/api/products",
+    GET_PRODUCT_BY_ID: "/api/products",
+    
+    // Category management endpoints (additional)
+    GET_CATEGORIES: "/api/categories",
+    GET_CATEGORY_BY_ID: "/api/categories",
+    CREATE_CATEGORY: "/api/categories",
+    UPDATE_CATEGORY: "/api/categories",
+    
+    // Additional load endpoints
+    LOAD_PRODUCTS_BY_CATEGORY: "/api/load/products-by-category",
+    
+    // System endpoints
+    HEALTH_CHECK: "/api/health",
   },
 };

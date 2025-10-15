@@ -5,6 +5,11 @@ const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Helper function to handle different image types
 const getProductImage = (image) => {
+  // If image is null, return null (will be handled by ProductImage component)
+  if (image === null) {
+    return null;
+  }
+  
   // If image is empty or null, use fallback
   if (!image || image.trim() === "") {
     return "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop";
@@ -202,6 +207,129 @@ class ApiService {
         method: "PUT",
       }
     );
+  }
+
+  // Create product
+  async createProduct(productData) {
+    const response = await this.request(API_CONFIG.ENDPOINTS.CREATE_PRODUCT, {
+      method: "POST",
+      body: JSON.stringify(productData),
+    });
+    
+    // Handle backend response structure
+    if (response.success && response.data) {
+      // Transform the created product data to match frontend structure
+      const createdProduct = response.data;
+      return {
+        id: createdProduct._id,
+        name: createdProduct.name,
+        price: createdProduct.price,
+        originalPrice: createdProduct.price * 1.2, // Add 20% markup as original price
+        stock: createdProduct.stock,
+        image: getProductImage(createdProduct.image),
+        description: createdProduct.description,
+        category: createdProduct.category,
+        inStock: createdProduct.inStock,
+      };
+    }
+    return response;
+  }
+
+  // Update product
+  async updateProduct(productId, productData) {
+    const response = await this.request(
+      `${API_CONFIG.ENDPOINTS.UPDATE_PRODUCT}/${productId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(productData),
+      }
+    );
+    
+    // Handle backend response structure
+    if (response.success && response.data) {
+      // Transform the updated product data to match frontend structure
+      const updatedProduct = response.data;
+      return {
+        id: updatedProduct._id,
+        name: updatedProduct.name,
+        price: updatedProduct.price,
+        originalPrice: updatedProduct.price * 1.2, // Add 20% markup as original price
+        stock: updatedProduct.stock,
+        image: getProductImage(updatedProduct.image),
+        description: updatedProduct.description,
+        category: updatedProduct.category,
+        inStock: updatedProduct.inStock,
+      };
+    }
+    return response;
+  }
+
+  // Delete product
+  async deleteProduct(productId) {
+    return await this.request(
+      `${API_CONFIG.ENDPOINTS.DELETE_PRODUCT}/${productId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  // Get product by ID
+  async getProductById(productId) {
+    const response = await this.request(
+      `${API_CONFIG.ENDPOINTS.GET_PRODUCT_BY_ID}/${productId}`,
+      {
+        method: "GET",
+      }
+    );
+    
+    if (response.success && response.data) {
+      const product = response.data;
+      return {
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.price * 1.2,
+        stock: product.stock,
+        image: getProductImage(product.image),
+        description: product.description,
+        category: product.category,
+        inStock: product.inStock,
+      };
+    }
+    return response;
+  }
+
+  // Load products by category
+  async loadProductsByCategory(categoryName) {
+    const response = await this.request(
+      `${API_CONFIG.ENDPOINTS.LOAD_PRODUCTS_BY_CATEGORY}/${categoryName}`,
+      {
+        method: "GET",
+      }
+    );
+    
+    if (response.success && response.data) {
+      return response.data.map((product) => ({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.price * 1.2,
+        stock: product.stock,
+        image: getProductImage(product.image),
+        description: product.description,
+        category: product.category,
+        inStock: product.inStock,
+      }));
+    }
+    return response;
+  }
+
+  // Health check
+  async healthCheck() {
+    return await this.request(API_CONFIG.ENDPOINTS.HEALTH_CHECK, {
+      method: "GET",
+    });
   }
 }
 

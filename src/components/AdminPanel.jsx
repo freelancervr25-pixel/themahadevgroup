@@ -6,6 +6,9 @@ import {
   addProduct,
   updateProduct,
   deleteProduct,
+  updateProductAsync,
+  createProductAsync,
+  deleteProductAsync,
 } from "../store/productsSlice";
 import { fileToBase64, validateImageFile } from "../utils/base64Helper";
 import CategoryManagement from "./CategoryManagement";
@@ -30,6 +33,7 @@ const AdminPanel = () => {
     description: "",
   });
   const [imageFile, setImageFile] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const [errors, setErrors] = useState({});
 
   React.useEffect(() => {
@@ -86,7 +90,9 @@ const AdminPanel = () => {
       newErrors.stock = "Valid stock quantity is required";
     if (!formData.description.trim())
       newErrors.description = "Description is required";
-    if (!imageFile) newErrors.image = "Image file is required";
+    // Image is only required for new products, not when editing
+    if (!editingProduct && !imageFile) newErrors.image = "Image file is required";
+    // If editing and no new image uploaded and not removing image, keep existing
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,22 +104,67 @@ const AdminPanel = () => {
     if (!validateForm()) return;
 
     try {
-      // Convert uploaded image to base64
-      const base64Image = await fileToBase64(imageFile);
+      let imageData = null;
+      
+      if (editingProduct) {
+        // When editing, handle different image scenarios
+        if (removeImage) {
+          imageData = null; // Remove image
+        } else if (imageFile) {
+          imageData = await fileToBase64(imageFile); // New image uploaded
+        } else {
+          // Keep existing image (don't send image field)
+          imageData = undefined;
+        }
+      } else {
+        // When creating new product, always require image
+        imageData = await fileToBase64(imageFile);
+      }
 
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
         originalPrice: parseFloat(formData.originalPrice),
         stock: parseInt(formData.stock),
-        image: base64Image, // Always use uploaded image as base64
+        image: imageData, // Can be base64, null, or undefined
       };
 
       if (editingProduct) {
-        dispatch(updateProduct({ id: editingProduct.id, ...productData }));
-        setEditingProduct(null);
+        // Use async update for backend integration
+        try {
+          await dispatch(updateProductAsync({ 
+            productId: editingProduct.id, 
+            productData: {
+              name: productData.name,
+              description: productData.description,
+              price: productData.price,
+              stock: productData.stock,
+              image: productData.image,
+              category: productData.category || "general",
+              inStock: productData.stock > 0
+            }
+          })).unwrap();
+          setEditingProduct(null);
+          alert("Product updated successfully!");
+        } catch (error) {
+          alert(`Error updating product: ${error}`);
+        }
       } else {
-        dispatch(addProduct(productData));
+        // Use async create for backend integration
+        try {
+          await dispatch(createProductAsync({
+            name: productData.name,
+            description: productData.description,
+            price: productData.price,
+            stock: productData.stock,
+            image: productData.image,
+            category: productData.category || "general",
+            inStock: productData.stock > 0
+          })).unwrap();
+          alert("Product created successfully!");
+        } catch (error) {
+          alert(`Error creating product: ${error}`);
+        }
       }
 
       resetForm();
@@ -132,6 +183,7 @@ const AdminPanel = () => {
       description: "",
     });
     setImageFile(null);
+    setRemoveImage(false);
     setErrors({});
   };
 
@@ -145,12 +197,18 @@ const AdminPanel = () => {
       description: product.description,
     });
     setImageFile(null); // Clear previous image file
+    setRemoveImage(false); // Reset remove image option
     setShowAddForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      dispatch(deleteProduct(id));
+      try {
+        await dispatch(deleteProductAsync(id)).unwrap();
+        alert("Product deleted successfully!");
+      } catch (error) {
+        alert(`Error deleting product: ${error}`);
+      }
     }
   };
 
@@ -294,7 +352,22 @@ const AdminPanel = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Product Image *</label>
+                  <label>Product Image {!editingProduct && "*"}</label>
+                  
+                  {/* Show current image when editing */}
+                  {editingProduct && !imageFile && !removeImage && (
+                    <div className="current-image-section">
+                      <h4>Current Image:</h4>
+                      <div className="current-image-preview">
+                        <ProductImage
+                          src={editingProduct.image}
+                          alt="Current product image"
+                          style={{ maxWidth: "200px", maxHeight: "200px" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="image-input-container">
                     <input
                       type="file"
@@ -307,6 +380,21 @@ const AdminPanel = () => {
                       <p className="file-size-info">Max size: 5MB</p>
                     </div>
                   </div>
+                  
+                  {/* Remove image option when editing */}
+                  {editingProduct && (
+                    <div className="remove-image-option">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={removeImage}
+                          onChange={(e) => setRemoveImage(e.target.checked)}
+                        />
+                        <span>🗑️ Remove current image</span>
+                      </label>
+                    </div>
+                  )}
+                  
                   {errors.image && (
                     <span className="error">{errors.image}</span>
                   )}
