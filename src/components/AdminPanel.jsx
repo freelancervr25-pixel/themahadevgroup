@@ -9,6 +9,7 @@ import {
 } from "../store/productsSlice";
 import { fileToBase64, validateImageFile } from "../utils/base64Helper";
 import CategoryManagement from "./CategoryManagement";
+import ProductImage from "./ProductImage";
 import "../styles/admin.css";
 import "../styles/categoryManagement.css";
 
@@ -352,7 +353,7 @@ const AdminPanel = () => {
                 {products.map((product) => (
                   <div key={product.id} className="admin-product-card">
                     <div className="product-image">
-                      <img
+                      <ProductImage
                         src={product.image}
                         alt={product.name}
                         onError={(e) => {

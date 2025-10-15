@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../store/cartSlice";
+import ProductImage from "./ProductImage";
 import "../styles/home.css";
 
 const ProductCard = ({ product }) => {
@@ -17,7 +18,7 @@ const ProductCard = ({ product }) => {
   return (
     <div className="product-card">
       <div className="product-image-container">
-        <img
+        <ProductImage
           src={product.image}
           alt={product.name}
           className="product-image"

@@ -3,6 +3,28 @@ import { API_CONFIG } from "../config/api";
 
 const API_BASE_URL = API_CONFIG.BASE_URL;
 
+// Helper function to handle different image types
+const getProductImage = (image) => {
+  // If image is empty or null, use fallback
+  if (!image || image.trim() === "") {
+    return "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop";
+  }
+  
+  // If image is a base64 string, return as is
+  if (image.startsWith("data:image/")) {
+    return image;
+  }
+  
+  // If image is a URL, return as is
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+  
+  // If image is an emoji or short text, create a styled div representation
+  // For now, we'll use a fallback image for emojis
+  return "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop";
+};
+
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -120,9 +142,7 @@ class ApiService {
         price: product.price,
         originalPrice: product.price * 1.2, // Add 20% markup as original price
         stock: product.stock,
-        image:
-          product.image ||
-          "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
+        image: getProductImage(product.image),
         description: product.description,
         category: product.category,
         inStock: product.inStock,
@@ -155,9 +175,7 @@ class ApiService {
         price: product.price,
         originalPrice: product.price * 1.2, // Add 20% markup as original price
         stock: product.stock,
-        image:
-          product.image ||
-          "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop",
+        image: getProductImage(product.image),
         description: product.description,
         category: product.category,
         inStock: product.inStock,
