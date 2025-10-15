@@ -9,22 +9,22 @@ const getProductImage = (image) => {
   if (image === null) {
     return null;
   }
-  
+
   // If image is empty or null, use fallback
   if (!image || image.trim() === "") {
     return "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop";
   }
-  
+
   // If image is a base64 string, return as is
   if (image.startsWith("data:image/")) {
     return image;
   }
-  
+
   // If image is a URL, return as is
   if (image.startsWith("http://") || image.startsWith("https://")) {
     return image;
   }
-  
+
   // If image is an emoji or short text, create a styled div representation
   // For now, we'll use a fallback image for emojis
   return "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=300&fit=crop";
@@ -215,7 +215,7 @@ class ApiService {
       method: "POST",
       body: JSON.stringify(productData),
     });
-    
+
     // Handle backend response structure
     if (response.success && response.data) {
       // Transform the created product data to match frontend structure
@@ -244,7 +244,7 @@ class ApiService {
         body: JSON.stringify(productData),
       }
     );
-    
+
     // Handle backend response structure
     if (response.success && response.data) {
       // Transform the updated product data to match frontend structure
@@ -282,7 +282,7 @@ class ApiService {
         method: "GET",
       }
     );
-    
+
     if (response.success && response.data) {
       const product = response.data;
       return {
@@ -308,7 +308,7 @@ class ApiService {
         method: "GET",
       }
     );
-    
+
     if (response.success && response.data) {
       return response.data.map((product) => ({
         id: product._id,

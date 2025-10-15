@@ -320,7 +320,9 @@ const productsSlice = createSlice({
         state.loading = false;
         const { productId, updatedProduct } = action.payload;
         // Update the product in the products array
-        const index = state.products.findIndex(product => product.id === productId);
+        const index = state.products.findIndex(
+          (product) => product.id === productId
+        );
         if (index !== -1) {
           state.products[index] = updatedProduct;
         }
@@ -352,7 +354,9 @@ const productsSlice = createSlice({
       .addCase(deleteProductAsync.fulfilled, (state, action) => {
         state.loading = false;
         const { productId } = action.payload;
-        state.products = state.products.filter(product => product.id !== productId);
+        state.products = state.products.filter(
+          (product) => product.id !== productId
+        );
         state.error = null;
       })
       .addCase(deleteProductAsync.rejected, (state, action) => {

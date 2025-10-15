@@ -31,6 +31,7 @@ const AdminPanel = () => {
     originalPrice: "",
     stock: "",
     description: "",
+    category: "sparklers",
   });
   const [imageFile, setImageFile] = useState(null);
   const [removeImage, setRemoveImage] = useState(false);
@@ -140,7 +141,7 @@ const AdminPanel = () => {
               price: productData.price,
               stock: productData.stock,
               image: productData.image,
-              category: productData.category || "general",
+              category: formData.category,
               inStock: productData.stock > 0
             }
           })).unwrap();
@@ -158,7 +159,7 @@ const AdminPanel = () => {
             price: productData.price,
             stock: productData.stock,
             image: productData.image,
-            category: productData.category || "general",
+            category: formData.category,
             inStock: productData.stock > 0
           })).unwrap();
           alert("Product created successfully!");
@@ -181,6 +182,7 @@ const AdminPanel = () => {
       originalPrice: "",
       stock: "",
       description: "",
+      category: "sparklers",
     });
     setImageFile(null);
     setRemoveImage(false);
@@ -195,6 +197,7 @@ const AdminPanel = () => {
       originalPrice: product.originalPrice.toString(),
       stock: product.stock.toString(),
       description: product.description,
+      category: product.category || "sparklers",
     });
     setImageFile(null); // Clear previous image file
     setRemoveImage(false); // Reset remove image option
@@ -348,6 +351,25 @@ const AdminPanel = () => {
                   />
                   {errors.description && (
                     <span className="error">{errors.description}</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Category *</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="category-select"
+                  >
+                    <option value="sparklers">✨ Sparklers</option>
+                    <option value="crackers">💥 Crackers</option>
+                    <option value="fountains">🌈 Fountains</option>
+                    <option value="rockets">🚀 Rockets</option>
+                    <option value="novelties">💨 Novelties</option>
+                  </select>
+                  {errors.category && (
+                    <span className="error">{errors.category}</span>
                   )}
                 </div>
 
