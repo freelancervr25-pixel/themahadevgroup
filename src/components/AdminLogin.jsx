@@ -80,13 +80,7 @@ const AdminLogin = () => {
           </button>
         </form>
 
-        <div className="login-info">
-          <p>
-            <strong>Admin Credentials:</strong>
-          </p>
-          <p>Username: mahadev</p>
-          <p>Password: admin123</p>
-        </div>
+        {/* Removed demo credentials from the login page */}
       </div>
     </div>
   );

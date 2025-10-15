@@ -29,12 +29,18 @@ const Checkout = () => {
   const [orderMessage, setOrderMessage] = useState("");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [secondsLeft, setSecondsLeft] = useState(0);
   const clearTimerRef = useRef(null);
+  const summaryRef = useRef(null);
+  const countdownRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (clearTimerRef.current) {
         clearTimeout(clearTimerRef.current);
+      }
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
       }
     };
   }, []);
@@ -116,14 +122,15 @@ const Checkout = () => {
           amount: Number(summary.discount_amount || 0),
           netTotal: Number(summary.net_total || totalForPdf),
         });
-        setOrderMessage(
-          "Coupon applied. PDF will download now — please share it with us to confirm your order."
-        );
-      } else if (promoCode) {
-        setOrderMessage(
-          "PDF will download now — please share it with us to confirm your order."
-        );
+      } else {
+        setDiscountInfo(null);
       }
+
+      setOrderMessage(
+        summary.coupon_applied
+          ? "Coupon applied. PDF will download now — please share it with us to confirm your order."
+          : "PDF will download now — please share it with us to confirm your order."
+      );
 
       await generateOrderPDF(itemsForPdf, customerInfo, totalForPdf, {
         couponApplied: !!summary.coupon_applied,
@@ -136,12 +143,31 @@ const Checkout = () => {
 
       // Keep cart for 30s to show discounted totals; then clear
       setOrderPlaced(true);
+      setSecondsLeft(30);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      countdownRef.current = setInterval(() => {
+        setSecondsLeft((s) => {
+          if (s <= 1) {
+            clearInterval(countdownRef.current);
+          }
+          return Math.max(0, s - 1);
+        });
+      }, 1000);
       clearTimerRef.current = setTimeout(() => {
         dispatch(clearCart());
         setCustomerInfo({ name: "", mobile: "" });
         setPromoCode("");
         setOrderPlaced(false);
+        setSecondsLeft(0);
       }, 30000);
+
+      // Scroll summary note into view
+      try {
+        summaryRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } catch {}
       // Alert with discount info after successful order
       if (summary.coupon_applied) {
         alert(
@@ -375,8 +401,32 @@ const Checkout = () => {
               <div
                 className="info-message"
                 style={{ marginTop: 10, color: "#2e7d32" }}
+                ref={summaryRef}
               >
                 {orderMessage}
+                {orderPlaced && (
+                  <>
+                    <br />
+                    Please share the downloaded PDF on WhatsApp to confirm your
+                    order: <strong>+91 92744 27122</strong>
+                    {shareUrl && (
+                      <>
+                        <br />
+                        <a
+                          href={shareUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="download-pdf-button"
+                          style={{ display: "inline-block", marginTop: 8 }}
+                        >
+                          Share Order on WhatsApp
+                        </a>
+                      </>
+                    )}
+                    <br />
+                    Clearing cart in {secondsLeft}s...
+                  </>
+                )}
               </div>
             )}
 
