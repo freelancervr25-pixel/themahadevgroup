@@ -972,8 +972,12 @@ const AdminPanel = () => {
                       </span>
                     </div>
                     <div className="progress-labels">
-                      <span>Paid: Rs {paid.toFixed(2)}</span>
-                      <span>Target: Rs {target.toFixed(2)}</span>
+                      <span className={`paid-value ${statusClass}`}>
+                        Paid: Rs {paid.toFixed(2)}
+                      </span>
+                      <span className="target-value">
+                        Target: Rs {target.toFixed(2)}
+                      </span>
                     </div>
                     <div
                       className={`progress-bar ${statusClass}`}

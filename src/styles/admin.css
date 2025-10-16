@@ -949,6 +949,17 @@
   margin-bottom: 8px;
 }
 
+.paid-value.below,
+.paid-value.met {
+  color: #6c757d; /* neutral grey */
+  font-weight: 600;
+}
+
+.target-value {
+  color: #6c757d; /* neutral grey */
+  font-weight: 600;
+}
+
 .progress-bar {
   position: relative;
   height: 14px;
