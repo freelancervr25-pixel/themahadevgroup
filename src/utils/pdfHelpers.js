@@ -151,24 +151,26 @@ export const generateOrderPDF = async (
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
+  const topMargin = 20;
+  const bottomMargin = 20;
 
   // Header (brand removed)
   pdf.setFontSize(16);
   pdf.setTextColor(251, 192, 45);
-  pdf.text("Order Summary", pageWidth / 2, 20, { align: "center" });
+  pdf.text("Order Summary", pageWidth / 2, topMargin, { align: "center" });
 
   // Customer Info
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(`Customer Name: ${customerInfo.name}`, 20, 40);
-  pdf.text(`Mobile: ${customerInfo.mobile}`, 20, 50);
-  pdf.text(`Order Date: ${new Date().toLocaleString()}`, 20, 60);
+  pdf.text(`Customer Name: ${customerInfo.name}`, 20, topMargin + 20);
+  pdf.text(`Mobile: ${customerInfo.mobile}`, 20, topMargin + 30);
+  pdf.text(`Order Date: ${new Date().toLocaleString()}`, 20, topMargin + 40);
 
   // Line separator
   pdf.setDrawColor(211, 47, 47);
-  pdf.line(20, 70, pageWidth - 20, 70);
+  pdf.line(20, topMargin + 50, pageWidth - 20, topMargin + 50);
 
-  let yPosition = 80;
+  let yPosition = topMargin + 60;
 
   // Optional coupon/discount block
   if (options && (options.couponApplied || options.coupon_code)) {
@@ -202,20 +204,35 @@ export const generateOrderPDF = async (
     yPosition += 10;
   }
 
-  // Table header
-  pdf.setFontSize(10);
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFillColor(211, 47, 47);
-  pdf.rect(20, yPosition - 5, pageWidth - 40, 10, "F");
-  pdf.text("Item", 25, yPosition);
-  pdf.text("Qty", 100, yPosition);
-  pdf.text("Price", 120, yPosition);
-  pdf.text("Total", 150, yPosition);
+  // Helper to draw table header
+  const drawTableHeader = () => {
+    pdf.setFontSize(10);
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFillColor(211, 47, 47);
+    pdf.rect(20, yPosition - 5, pageWidth - 40, 10, "F");
+    pdf.text("Item", 25, yPosition);
+    pdf.text("Qty", 100, yPosition);
+    pdf.text("Price", 120, yPosition);
+    pdf.text("Total", 150, yPosition);
+    yPosition += 15;
+  };
 
-  yPosition += 15;
+  // Draw initial header
+  drawTableHeader();
+
+  const rowHeight = 25; // with image
+  const rowHeightNoImg = 20; // without image
 
   // Order items
   for (const item of cartItems) {
+    // Check space; if not enough for next row + totals, add page and header
+    const needed = rowHeight;
+    if (yPosition + needed > pageHeight - bottomMargin) {
+      pdf.addPage();
+      yPosition = topMargin; // start near top on new page
+      drawTableHeader();
+    }
+
     try {
       // Add product image
       const imgData = await imageToBase64(item.image);
@@ -229,9 +246,8 @@ export const generateOrderPDF = async (
       pdf.text(`Rs ${item.price}`, 120, yPosition + 10);
       pdf.text(`Rs ${item.price * item.quantity}`, 150, yPosition + 10);
 
-      yPosition += 25;
+      yPosition += rowHeight;
     } catch (error) {
-      console.error("Error adding image to PDF:", error);
       // Add text without image if image fails
       pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
@@ -239,8 +255,16 @@ export const generateOrderPDF = async (
       pdf.text(item.quantity.toString(), 100, yPosition + 10);
       pdf.text(`Rs ${item.price}`, 120, yPosition + 10);
       pdf.text(`Rs ${item.price * item.quantity}`, 150, yPosition + 10);
-      yPosition += 20;
+      yPosition += rowHeightNoImg;
     }
+  }
+
+  // Ensure space for totals; if not, add a new page
+  const totalsBlockHeight =
+    options && (options.couponApplied || options.discountAmount) ? 24 : 8;
+  if (yPosition + totalsBlockHeight > pageHeight - bottomMargin) {
+    pdf.addPage();
+    yPosition = topMargin;
   }
 
   // Totals (with optional discount summary)

@@ -1053,6 +1053,23 @@
   color: #28a745;
 }
 
+.order-download-button {
+  background: linear-gradient(135deg, #fbc02d 0%, #f57f17 100%);
+  color: #b71c1c;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 700;
+  margin-left: 10px;
+  transition: background 0.3s ease;
+}
+
+.order-download-button:hover {
+  background: linear-gradient(135deg, #f57f17 0%, #fbc02d 100%);
+}
+
 /* Responsive Design for Orders */
 @media (max-width: 768px) {
   .order-details {

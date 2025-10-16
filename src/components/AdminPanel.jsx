@@ -22,6 +22,7 @@ import {
 import ProductImage from "./ProductImage";
 import "../styles/admin.css";
 import apiService from "../services/api";
+import { generateOrderPDF } from "../utils/pdfHelpers";
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
@@ -146,6 +147,43 @@ const AdminPanel = () => {
           "❌ Error rejecting order: " + (error.message || "Unknown error")
         );
       }
+    }
+  };
+
+  const handleDownloadOrderPDF = async (order) => {
+    try {
+      const cartItems = Array.isArray(order.cart_items)
+        ? order.cart_items.map((i) => ({
+            id: i.id,
+            name: i.name,
+            price: Number(i.price),
+            quantity: Number(i.qty || i.quantity || 1),
+            image: "", // images optional in admin PDF
+          }))
+        : [];
+
+      const customerInfo = {
+        name: order.user_name || "Customer",
+        mobile: order.user_mobile || "",
+      };
+
+      const totalPrice = Number(
+        order.net_amount || order.total_amount || order.order_total || 0
+      );
+
+      await generateOrderPDF(cartItems, customerInfo, totalPrice, {
+        couponApplied:
+          Number(order.discount_amount || 0) > 0 || !!order.coupon_code,
+        couponCode: order.coupon_code,
+        orderTotal: Number(
+          order.total_amount || order.order_total || totalPrice
+        ),
+        discountPercent: Number(order.discount_percent || 0),
+        discountAmount: Number(order.discount_amount || 0),
+        netTotal: Number(order.net_amount || totalPrice),
+      });
+    } catch (e) {
+      alert("Failed to generate order PDF: " + (e?.message || "Unknown error"));
     }
   };
 
@@ -841,6 +879,13 @@ const AdminPanel = () => {
                             </button>
                           </div>
                         )}
+                        <button
+                          className="order-download-button"
+                          onClick={() => handleDownloadOrderPDF(order)}
+                          title="Download Order PDF"
+                        >
+                          📥 Download PDF
+                        </button>
                       </div>
                     </div>
 
