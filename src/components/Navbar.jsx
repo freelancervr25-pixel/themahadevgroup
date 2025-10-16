@@ -28,14 +28,7 @@ const Navbar = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/admin"
-                className={`navbar-link ${
-                  location.pathname === "/admin" ? "active" : ""
-                }`}
-              >
-                Admin Panel
-              </Link>
+              {/* Admin Panel link removed */}
             </>
           )}
 
