@@ -64,31 +64,46 @@ const ProductCard = ({ product }) => {
         <div className="product-stock">Stock: {product.stock} units</div>
 
         {cartItem ? (
-          <div className="qty-controls">
-            <button
-              className="qty-button"
-              onClick={() => dispatch(decreaseQty(product.id))}
-              disabled={cartItem.quantity <= 1}
-            >
-              –
-            </button>
-            <span className="qty-value">{cartItem.quantity}</span>
-            <button
-              className="qty-button"
-              onClick={() => dispatch(increaseQty(product.id))}
-              disabled={cartItem.quantity >= product.stock}
-            >
-              +
-            </button>
-          </div>
+          <>
+            <div className="qty-controls">
+              <button
+                className="qty-button"
+                onClick={() => dispatch(decreaseQty(product.id))}
+                disabled={cartItem.quantity <= 1}
+              >
+                –
+              </button>
+              <span className="qty-value">{cartItem.quantity}</span>
+              <button
+                className="qty-button"
+                onClick={() => dispatch(increaseQty(product.id))}
+                disabled={cartItem.quantity >= product.stock}
+              >
+                +
+              </button>
+            </div>
+            {product.stock > 0 && product.stock < 5 && (
+              <div className="low-stock-note">Low in stock — order fast!</div>
+            )}
+          </>
         ) : (
-          <button
-            className="add-to-cart-btn"
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-          >
-            {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-          </button>
+          <>
+            <button
+              className="add-to-cart-btn"
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+            >
+              {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+            </button>
+            {product.stock === 0 && (
+              <div className="restock-note">
+                We’ll restock this item soon. Please check back!
+              </div>
+            )}
+            {product.stock > 0 && product.stock < 5 && (
+              <div className="low-stock-note">Low in stock — order fast!</div>
+            )}
+          </>
         )}
       </div>
     </div>

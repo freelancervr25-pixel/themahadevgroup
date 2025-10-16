@@ -580,7 +580,7 @@
   border-radius: 15px;
   overflow: hidden;
   transition: all 0.3s ease;
-  background: white;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
 }
 
 .admin-product-card:hover {
@@ -592,6 +592,8 @@
 .product-image {
   height: 200px;
   overflow: hidden;
+  background: #ffffff; /* keep consistent bg behind images */
+  border-bottom: 1px solid #eee; /* subtle divider */
 }
 
 .product-image img {
@@ -609,6 +611,16 @@
 
 .product-details {
   padding: 20px;
+  background: transparent; /* no background when stock is proper */
+}
+
+/* Conditional backgrounds for low/out stock */
+.product-details.low {
+  background: #fff3cd; /* light orange */
+}
+
+.product-details.out {
+  background: #f8d7da; /* light red */
 }
 
 .product-details h3 {
@@ -648,6 +660,27 @@
   color: #666;
   font-size: 0.9rem;
   margin-bottom: 20px;
+}
+
+.product-stock .stock-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.product-stock .stock-badge.low {
+  background: #fff3cd; /* light orange */
+  color: #856404; /* dark orange text */
+  border: 1px solid #ffeeba;
+}
+
+.product-stock .stock-badge.out {
+  background: #f8d7da; /* light red */
+  color: #721c24; /* dark red text */
+  border: 1px solid #f5c6cb;
 }
 
 .product-actions {

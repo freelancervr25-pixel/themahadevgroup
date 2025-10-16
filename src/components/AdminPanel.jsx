@@ -657,25 +657,47 @@ const AdminPanel = () => {
                         />
                       </div>
 
-                      <div className="product-details">
-                        <h3>{product.name}</h3>
-                        <p className="product-description">
-                          {product.description}
-                        </p>
+                      {(() => {
+                        const stockNum = Number(product.stock || 0);
+                        const detailsClass = `product-details ${
+                          stockNum === 0
+                            ? "out"
+                            : stockNum > 0 && stockNum < 5
+                            ? "low"
+                            : ""
+                        }`;
+                        return (
+                          <div className={detailsClass}>
+                            <h3>{product.name}</h3>
+                            <p className="product-description">
+                              {product.description}
+                            </p>
 
-                        <div className="product-pricing">
-                          <span className="current-price">
-                            ₹{product.price}
-                          </span>
-                          <span className="original-price">
-                            ₹{product.originalPrice}
-                          </span>
-                        </div>
+                            <div className="product-pricing">
+                              <span className="current-price">
+                                ₹{product.price}
+                              </span>
+                              <span className="original-price">
+                                ₹{product.originalPrice}
+                              </span>
+                            </div>
 
-                        <div className="product-stock">
-                          Stock: {product.stock} units
-                        </div>
-                      </div>
+                            <div className="product-stock">
+                              Stock: {product.stock} units
+                              {stockNum === 0 && (
+                                <span className="stock-badge out">
+                                  Out of stock
+                                </span>
+                              )}
+                              {stockNum > 0 && stockNum < 5 && (
+                                <span className="stock-badge low">
+                                  Low: {product.stock}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="product-actions">
                         {product.status === "deleted" ? (
