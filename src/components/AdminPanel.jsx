@@ -50,6 +50,7 @@ const AdminPanel = () => {
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(null);
+  const [expandedOrders, setExpandedOrders] = useState(new Set());
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -66,6 +67,16 @@ const AdminPanel = () => {
       dispatch(loadOrdersAsync());
     }
   }, [activeTab, isLoggedIn, dispatch]);
+
+  // Initialize expanded orders for pending orders
+  useEffect(() => {
+    if (orders && orders.length > 0) {
+      const pendingOrderIds = orders
+        .filter((order) => order.status === "0")
+        .map((order) => order.id);
+      setExpandedOrders(new Set(pendingOrderIds));
+    }
+  }, [orders]);
 
   // Filter products based on search query
   const filteredProducts = products.filter(
@@ -86,15 +97,49 @@ const AdminPanel = () => {
           .includes(orderSearchQuery.toLowerCase()))
   );
 
-  const filteredOrders = baseFilteredOrders.filter((order) => {
-    if (!statusFilter) return true;
-    const s = Number(order.status);
-    if (statusFilter === "pending") return s === 0;
-    if (statusFilter === "accepted") return s === 1;
-    if (statusFilter === "rejected") return s === 2;
-    if (statusFilter === "paid") return s === 3;
-    return true;
-  });
+  const filteredOrders = baseFilteredOrders
+    .filter((order) => {
+      if (!statusFilter) return true;
+      const s = Number(order.status);
+      if (statusFilter === "pending") return s === 0;
+      if (statusFilter === "accepted") return s === 1;
+      if (statusFilter === "rejected") return s === 2;
+      if (statusFilter === "paid") return s === 3;
+      return true;
+    })
+    .sort((a, b) => {
+      const aStatus = Number(a.status);
+      const bStatus = Number(b.status);
+
+      // Define priority order: Pending(0) → Completed(1) → Paid(3) → Cancelled(2)
+      const getPriority = (status) => {
+        switch (status) {
+          case 0:
+            return 1; // Pending - highest priority
+          case 1:
+            return 2; // Completed
+          case 3:
+            return 3; // Paid
+          case 2:
+            return 4; // Cancelled - lowest priority
+          default:
+            return 5;
+        }
+      };
+
+      const aPriority = getPriority(aStatus);
+      const bPriority = getPriority(bStatus);
+
+      // First sort by priority
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+
+      // Within same priority, sort by creation date (newest first)
+      const aDate = new Date(a.created_at || a.date);
+      const bDate = new Date(b.created_at || b.date);
+      return bDate - aDate;
+    });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -160,6 +205,18 @@ const AdminPanel = () => {
         );
       }
     }
+  };
+
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrders((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
   };
 
   const handleMarkPaid = async (orderId) => {
@@ -1025,14 +1082,12 @@ const AdminPanel = () => {
               <div className="orders-list">
                 {filteredOrders.map((order) => (
                   <div key={order.id} className="order-card">
-                    <div className="order-header">
+                    <div
+                      className="order-header clickable"
+                      onClick={() => toggleOrderExpansion(order.id)}
+                    >
                       <div className="order-info">
                         <h3>Order #{order.id}</h3>
-                        <p className="order-date">
-                          {new Date(
-                            order.created_at || order.date
-                          ).toLocaleString()}
-                        </p>
                       </div>
                       <div className="order-status">
                         <span
@@ -1054,6 +1109,10 @@ const AdminPanel = () => {
                             ? "Pending"
                             : "Cancelled"}
                         </span>
+                        <span className="expand-icon">
+                          {expandedOrders.has(order.id) ? "▼" : "▶"}
+                        </span>
+
                         {order.status === "0" && (
                           <div className="order-actions">
                             <button
@@ -1090,75 +1149,100 @@ const AdminPanel = () => {
                       </div>
                     </div>
 
-                    <div className="order-details">
-                      <div className="customer-info">
-                        <h4>Customer Details</h4>
-                        <p>
-                          <strong>Name:</strong> {order.user_name || "N/A"}
-                        </p>
-                        <p>
-                          <strong>Mobile:</strong> {order.user_mobile || "N/A"}
-                        </p>
-                        {order.coupon_code &&
-                          order.discount_amount &&
-                          parseFloat(order.discount_amount) > 0 && (
+                    {(order.status !== "2" || expandedOrders.has(order.id)) && (
+                      <div className="order-date-total">
+                        <span className="order-date">
+                          {new Date(
+                            order.created_at || order.date
+                          ).toLocaleString()}
+                        </span>
+                        <span className="order-net-total-inline">
+                          {order.discount_amount &&
+                          parseFloat(order.discount_amount) > 0
+                            ? `Net Total: Rs ${
+                                order.net_amount || order.total_amount || 0
+                              }`
+                            : `Total: Rs ${order.total_amount || 0}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {expandedOrders.has(order.id) && (
+                      <div className="order-details">
+                        <div className="customer-info">
+                          <h4>Customer Details</h4>
+                          <p>
+                            <strong>Name:</strong> {order.user_name || "N/A"}
+                          </p>
+                          <p>
+                            <strong>Mobile:</strong>{" "}
+                            {order.user_mobile || "N/A"}
+                          </p>
+                          {order.coupon_code &&
+                            order.discount_amount &&
+                            parseFloat(order.discount_amount) > 0 && (
+                              <p>
+                                <strong>Coupon Applied:</strong>{" "}
+                                {order.coupon_code}
+                              </p>
+                            )}
+                        </div>
+
+                        <div className="order-items">
+                          <h4>Items ({order.cart_items?.length || 0})</h4>
+                          {order.cart_items && order.cart_items.length > 0 ? (
+                            <div className="items-list">
+                              {order.cart_items.map((item, index) => (
+                                <div key={index} className="order-item">
+                                  <span className="item-name">{item.name}</span>
+                                  <div className="item-details">
+                                    <span className="item-calculation">
+                                      Qty: {item.qty} x Rs {item.price} = Rs{" "}
+                                      {(
+                                        parseFloat(item.price) *
+                                        parseInt(item.qty)
+                                      ).toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p>No items found</p>
+                          )}
+                        </div>
+
+                        <div className="order-totals">
+                          <h4>Order Summary</h4>
+                          <p>
+                            <strong>Subtotal:</strong> Rs{" "}
+                            {order.total_amount || 0}
+                          </p>
+                          {order.discount_amount &&
+                            parseFloat(order.discount_amount) > 0 && (
+                              <>
+                                <p className="discount-info">
+                                  <strong>
+                                    Discount ({order.discount_percent || 0}%):
+                                  </strong>{" "}
+                                  -Rs {order.discount_amount}
+                                </p>
+                                <p className="net-total">
+                                  <strong>Net Total:</strong> Rs{" "}
+                                  {order.net_amount || order.total_amount || 0}
+                                </p>
+                              </>
+                            )}
+                          {(!order.discount_amount ||
+                            parseFloat(order.discount_amount) === 0) && (
                             <p>
-                              <strong>Coupon Applied:</strong>{" "}
-                              {order.coupon_code}
+                              <strong>Total:</strong> Rs{" "}
+                              {order.total_amount || 0}
                             </p>
                           )}
+                        </div>
                       </div>
-
-                      <div className="order-items">
-                        <h4>Items ({order.cart_items?.length || 0})</h4>
-                        {order.cart_items && order.cart_items.length > 0 ? (
-                          <div className="items-list">
-                            {order.cart_items.map((item, index) => (
-                              <div key={index} className="order-item">
-                                <span className="item-name">{item.name}</span>
-                                <span className="item-qty">
-                                  Qty: {item.qty}
-                                </span>
-                                <span className="item-price">
-                                  Rs {item.price}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p>No items found</p>
-                        )}
-                      </div>
-
-                      <div className="order-totals">
-                        <h4>Order Summary</h4>
-                        <p>
-                          <strong>Subtotal:</strong> Rs{" "}
-                          {order.total_amount || 0}
-                        </p>
-                        {order.discount_amount &&
-                          parseFloat(order.discount_amount) > 0 && (
-                            <>
-                              <p className="discount-info">
-                                <strong>
-                                  Discount ({order.discount_percent || 0}%):
-                                </strong>{" "}
-                                -Rs {order.discount_amount}
-                              </p>
-                              <p className="net-total">
-                                <strong>Net Total:</strong> Rs{" "}
-                                {order.net_amount || order.total_amount || 0}
-                              </p>
-                            </>
-                          )}
-                        {(!order.discount_amount ||
-                          parseFloat(order.discount_amount) === 0) && (
-                          <p>
-                            <strong>Total:</strong> Rs {order.total_amount || 0}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>

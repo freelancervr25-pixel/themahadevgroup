@@ -1058,6 +1058,51 @@
   border-bottom: 1px solid #e9ecef;
 }
 
+.order-header.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 0;
+}
+
+.order-header.clickable:hover {
+  background: #f8f9fa;
+}
+
+.expand-icon {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #6c757d;
+  transition: transform 0.2s ease;
+}
+
+.order-date-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.order-date {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.order-net-total-inline {
+  background: #e8f5e8;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 .order-status {
   display: flex;
   align-items: center;
@@ -1184,16 +1229,17 @@
 }
 
 .items-list {
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
+  padding:0px;
 }
 
 .order-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
+  flex-direction: column;
+  padding: 12px 0;
   border-bottom: 1px solid #e9ecef;
+  gap: 6px;
 }
 
 .order-item:last-child {
@@ -1201,20 +1247,23 @@
 }
 
 .item-name {
-  flex: 1;
-  font-weight: 500;
+  font-weight: 600;
   color: #2c3e50;
+  font-size: 1.1em;
+  margin-bottom: 4px;
 }
 
-.item-qty {
-  color: #6c757d;
-  font-size: 0.9em;
-  margin: 0 10px;
+.item-details {
+  display: flex;
+  gap: 15px;
+  flex-direction: row;
+  align-items: center;
 }
 
-.item-price {
-  font-weight: bold;
-  color: #28a745;
+.item-calculation {
+  color: #495057;
+  font-size: 0.95em;
+  font-weight: 500;
 }
 
 .order-download-button {
@@ -1253,13 +1302,22 @@
     gap: 15px;
   }
   
-  .order-item {
+  .orders-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+    align-items: stretch;
+    gap: 10px;
   }
   
-  .item-qty {
-    margin: 0;
+  .orders-actions .search-container {
+    min-width: auto;
+  }
+  
+  .order-item {
+    padding: 10px 0;
+  }
+  
+  .item-details {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }
