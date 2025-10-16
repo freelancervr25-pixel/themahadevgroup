@@ -80,6 +80,14 @@ const authSlice = createSlice({
         state.isLoggedIn = false;
         state.adminUser = null;
         state.error = null;
+        // Clear all localStorage data
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUsername");
+        localStorage.removeItem("adminId");
+        localStorage.removeItem("adminAuthToken");
+        localStorage.removeItem("safetyAccepted");
+        // Reload page to ensure clean state
+        window.location.reload();
       });
   },
 });

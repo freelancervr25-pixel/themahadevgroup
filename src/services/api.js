@@ -251,7 +251,20 @@ class ApiService {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      // Clear all localStorage data
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUsername");
+      localStorage.removeItem("adminId");
+      localStorage.removeItem("adminAuthToken");
+
+      // Clear any other potential localStorage items
+      localStorage.removeItem("safetyAccepted");
+
+      // Clear the token in the service
       this.setToken(null);
+
+      // Reload the page to ensure clean state
+      window.location.reload();
     }
   }
 
