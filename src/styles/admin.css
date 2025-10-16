@@ -845,6 +845,159 @@
   font-size: 1.8em;
 }
 
+/* Orders summary cards */
+.orders-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 10px 0 20px;
+}
+
+.summary-pill {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.summary-pill .label {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.summary-pill .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.summary-pill.accepted .value {
+  color: #fd7e14; /* orange for accepted */
+}
+
+.summary-pill.rejected .value {
+  color: #dc3545; /* red for rejected */
+}
+
+.summary-pill.paid-amount .value {
+  color: #28a745; /* green for paid */
+}
+
+.summary-pill.pending-amount .value {
+  color: #dc3545; /* red for pending */
+}
+
+.summary-pill.paid .value {
+  color: #28a745; /* green for paid count */
+}
+
+.summary-pill.pending .value {
+  color: #856404; /* amber/brown for pending */
+}
+
+.summary-pill.clickable {
+  cursor: pointer;
+}
+
+.summary-pill.active {
+  outline: 2px solid #007bff;
+}
+
+.pill-clear {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pill-clear:hover {
+  color: #dc3545;
+}
+
+/* Target progress card */
+.target-card {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.target-header {
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: #f8d7da; /* default red background when below */
+  overflow: hidden;
+}
+
+.progress-bar.met {
+  background: #d4edda; /* green background when met */
+}
+
+.bar-fill {
+  height: 100%;
+  background: #dc3545; /* red fill when below */
+  border-radius: 999px 0 0 999px;
+  transition: width 0.4s ease;
+}
+
+.bar-fill.met {
+  background: #28a745; /* green fill when met */
+}
+
+.target-diff {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.target-diff.below {
+  color: #dc3545;
+}
+
+.target-diff.met {
+  color: #28a745;
+}
+
+.target-percent {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.target-percent.below {
+  color: #dc3545; /* red when below target */
+}
+
+.target-percent.met {
+  color: #28a745; /* green when met/over */
+}
+
 .refresh-button {
   background: #28a745;
   color: white;

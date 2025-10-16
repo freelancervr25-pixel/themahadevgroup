@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiService from "../services/api";
+import { logoutAsync } from "./authSlice";
 
 // No local fallback products; rely on backend-loaded data
 
@@ -7,6 +8,7 @@ const initialState = {
   products: [],
   categories: [],
   orders: [],
+  ordersSummary: null,
   loading: false,
   error: null,
   nextId: 7,
@@ -133,11 +135,15 @@ export const loadProductsByCategoryAsync = createAsyncThunk(
 // Load admin products (requires admin login context)
 export const loadAdminProductsAsync = createAsyncThunk(
   "products/loadAdminProducts",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
       const response = await apiService.loadAdminProducts();
       return response;
     } catch (error) {
+      if ((error?.message || "").toLowerCase() === "logout") {
+        dispatch(logoutAsync());
+        return rejectWithValue("Logged out");
+      }
       return rejectWithValue(error.message);
     }
   }
@@ -146,11 +152,15 @@ export const loadAdminProductsAsync = createAsyncThunk(
 // Load orders for admin
 export const loadOrdersAsync = createAsyncThunk(
   "products/loadOrders",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
-      const orders = await apiService.loadOrders();
-      return orders;
+      const result = await apiService.loadOrders();
+      return result;
     } catch (error) {
+      if ((error?.message || "").toLowerCase() === "logout") {
+        dispatch(logoutAsync());
+        return rejectWithValue("Logged out");
+      }
       return rejectWithValue(error.message);
     }
   }
@@ -364,7 +374,12 @@ const productsSlice = createSlice({
       })
       .addCase(loadOrdersAsync.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload || [];
+        // API may return either array or {orders, summary}
+        const payload = action.payload || [];
+        state.orders = Array.isArray(payload) ? payload : payload.orders || [];
+        state.ordersSummary = Array.isArray(payload)
+          ? null
+          : payload.summary || null;
         state.error = null;
       })
       .addCase(loadOrdersAsync.rejected, (state, action) => {

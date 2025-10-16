@@ -30,6 +30,7 @@ const AdminPanel = () => {
   const { isLoggedIn, adminUser } = useSelector((state) => state.auth);
   const products = useSelector((state) => state.products.products);
   const orders = useSelector(selectAllOrders);
+  const ordersSummary = useSelector((state) => state.products.ordersSummary);
 
   const [activeTab, setActiveTab] = useState("products");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -48,6 +49,7 @@ const AdminPanel = () => {
   const [errors, setErrors] = useState({});
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState(null);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -72,8 +74,8 @@ const AdminPanel = () => {
       product.category.toLowerCase().includes(productSearchQuery.toLowerCase())
   );
 
-  // Filter orders based on search query
-  const filteredOrders = orders.filter(
+  // Filter orders based on search query and status filter
+  const baseFilteredOrders = orders.filter(
     (order) =>
       order.user_name.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
       order.user_mobile.includes(orderSearchQuery) ||
@@ -83,6 +85,16 @@ const AdminPanel = () => {
           .toLowerCase()
           .includes(orderSearchQuery.toLowerCase()))
   );
+
+  const filteredOrders = baseFilteredOrders.filter((order) => {
+    if (!statusFilter) return true;
+    const s = Number(order.status);
+    if (statusFilter === "pending") return s === 0;
+    if (statusFilter === "accepted") return s === 1;
+    if (statusFilter === "rejected") return s === 2;
+    if (statusFilter === "paid") return s === 3;
+    return true;
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -145,6 +157,24 @@ const AdminPanel = () => {
       } catch (error) {
         alert(
           "❌ Error rejecting order: " + (error.message || "Unknown error")
+        );
+      }
+    }
+  };
+
+  const handleMarkPaid = async (orderId) => {
+    if (
+      window.confirm(
+        "💰 Mark this order as PAID?\n\nThis will set status to Paid (3)."
+      )
+    ) {
+      try {
+        const result = await apiService.markOrderPaid(orderId);
+        alert("✅ " + (result.message || "Order marked as paid!"));
+        dispatch(loadOrdersAsync());
+      } catch (error) {
+        alert(
+          "❌ Error marking order paid: " + (error.message || "Unknown error")
         );
       }
     }
@@ -814,6 +844,163 @@ const AdminPanel = () => {
               </div>
             </div>
 
+            {ordersSummary && (
+              <div className="orders-summary">
+                <div className="summary-pill total">
+                  <span className="label">Total</span>
+                  <span className="value">{ordersSummary.total_orders}</span>
+                </div>
+                <div
+                  className={`summary-pill accepted clickable ${
+                    statusFilter === "accepted" ? "active" : ""
+                  }`}
+                  onClick={() => setStatusFilter("accepted")}
+                >
+                  <span className="label">Accepted</span>
+                  <span className="value">{ordersSummary.accepted_orders}</span>
+                  {statusFilter === "accepted" && (
+                    <button
+                      type="button"
+                      className="pill-clear"
+                      title="Clear filter"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStatusFilter(null);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <div
+                  className={`summary-pill rejected clickable ${
+                    statusFilter === "rejected" ? "active" : ""
+                  }`}
+                  onClick={() => setStatusFilter("rejected")}
+                >
+                  <span className="label">Rejected</span>
+                  <span className="value">{ordersSummary.rejected_orders}</span>
+                  {statusFilter === "rejected" && (
+                    <button
+                      type="button"
+                      className="pill-clear"
+                      title="Clear filter"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStatusFilter(null);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <div
+                  className={`summary-pill paid clickable ${
+                    statusFilter === "paid" ? "active" : ""
+                  }`}
+                  onClick={() => setStatusFilter("paid")}
+                >
+                  <span className="label">Paid</span>
+                  <span className="value">{ordersSummary.paid_orders}</span>
+                  {statusFilter === "paid" && (
+                    <button
+                      type="button"
+                      className="pill-clear"
+                      title="Clear filter"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStatusFilter(null);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <div
+                  className={`summary-pill pending clickable ${
+                    statusFilter === "pending" ? "active" : ""
+                  }`}
+                  onClick={() => setStatusFilter("pending")}
+                >
+                  <span className="label">Pending</span>
+                  <span className="value">
+                    {ordersSummary.pending_orders || 0}
+                  </span>
+                  {statusFilter === "pending" && (
+                    <button
+                      type="button"
+                      className="pill-clear"
+                      title="Clear filter"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStatusFilter(null);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <div className="summary-pill paid-amount">
+                  <span className="label">Paid Amount</span>
+                  <span className="value">
+                    Rs {Number(ordersSummary.paid_amount || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="summary-pill pending-amount">
+                  <span className="label">Pending Amount</span>
+                  <span className="value">
+                    Rs {Number(ordersSummary.pending_amount || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {ordersSummary &&
+              (() => {
+                const paid = Number(ordersSummary.paid_amount || 0);
+                const target = Math.max(0, Number(ordersSummary.target || 0));
+                const pct =
+                  target > 0 ? Math.min(100, (paid / target) * 100) : 0;
+                const diff = paid - target; // positive = over target
+                const statusClass = paid >= target ? "met" : "below";
+                return (
+                  <div className="target-card">
+                    <div className="target-header">
+                      <span>Target Progress</span>
+                      <span className={`target-percent ${statusClass}`}>
+                        {parseFloat(pct.toFixed(2))}%
+                      </span>
+                    </div>
+                    <div className="progress-labels">
+                      <span>Paid: Rs {paid.toFixed(2)}</span>
+                      <span>Target: Rs {target.toFixed(2)}</span>
+                    </div>
+                    <div
+                      className={`progress-bar ${statusClass}`}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow={pct.toFixed(2)}
+                    >
+                      <div
+                        className={`bar-fill ${statusClass}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    {/* percent shown in header */}
+                    <div className={`target-diff ${statusClass}`}>
+                      {diff >= 0 ? (
+                        <span>🎯 Target achieved by Rs {diff.toFixed(2)}</span>
+                      ) : (
+                        <span>
+                          ⚠️ Rs {Math.abs(diff).toFixed(2)} remaining to reach
+                          target
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
             {filteredOrders.length === 0 ? (
               <div className="no-orders">
                 <p>
@@ -846,21 +1033,21 @@ const AdminPanel = () => {
                       <div className="order-status">
                         <span
                           className={`status-badge ${
-                            order.status === "1"
+                            order.status === "3"
+                              ? "completed"
+                              : order.status === "1"
                               ? "completed"
                               : order.status === "0"
                               ? "pending"
-                              : order.status === "2"
-                              ? "cancelled"
                               : "cancelled"
                           }`}
                         >
-                          {order.status === "1"
+                          {order.status === "3"
+                            ? "Paid"
+                            : order.status === "1"
                             ? "Completed"
                             : order.status === "0"
                             ? "Pending"
-                            : order.status === "2"
-                            ? "Rejected"
                             : "Cancelled"}
                         </span>
                         {order.status === "0" && (
@@ -876,6 +1063,16 @@ const AdminPanel = () => {
                               onClick={() => handleRejectOrder(order.id)}
                             >
                               ❌ Reject Order
+                            </button>
+                          </div>
+                        )}
+                        {order.status === "1" && (
+                          <div className="order-actions">
+                            <button
+                              className="accept-order-button"
+                              onClick={() => handleMarkPaid(order.id)}
+                            >
+                              💰 Mark Paid
                             </button>
                           </div>
                         )}

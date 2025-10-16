@@ -10,6 +10,8 @@ import { generateCataloguePDF } from "../utils/pdfHelpers";
 import apiService from "../services/api";
 import ProductCard from "../components/ProductCard";
 import FloatingCartButton from "../components/FloatingCartButton";
+import SafetyPopup from "../components/SafetyPopup";
+import SafetyFooter from "../components/SafetyFooter";
 import "../styles/home.css";
 
 const Home = () => {
@@ -19,8 +21,28 @@ const Home = () => {
   const error = useSelector(selectProductsError);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [safetyAccepted, setSafetyAccepted] = useState(false);
 
   useEffect(() => {
+    // If this page load was a hard reload, clear session acceptance
+    try {
+      const nav =
+        performance && performance.getEntriesByType
+          ? performance.getEntriesByType("navigation")[0]
+          : null;
+      if (nav && nav.type === "reload") {
+        sessionStorage.removeItem("safetyAccepted");
+      }
+    } catch (_) {
+      // no-op
+    }
+
+    // Check if safety has been accepted in this session
+    const accepted = sessionStorage.getItem("safetyAccepted");
+    if (accepted === "true") {
+      setSafetyAccepted(true);
+    }
+
     // Load products from API on component mount
     dispatch(loadProductsAsync());
   }, [dispatch]);
@@ -61,8 +83,27 @@ const Home = () => {
     setSearchQuery("");
   };
 
+  const handleSafetyAccept = () => {
+    setSafetyAccepted(true);
+  };
+
+  const handleSafetyReject = () => {
+    // Show alert and keep popup open
+    alert(
+      "You must accept the safety instructions to access the fireworks catalogue. Please read and accept to continue."
+    );
+  };
+
   return (
     <div className="home-page">
+      {/* Safety Popup - shows if not accepted yet */}
+      {!safetyAccepted && (
+        <SafetyPopup
+          onAccept={handleSafetyAccept}
+          onReject={handleSafetyReject}
+        />
+      )}
+
       <div className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">🎆 Fireworks 🎆</h1>
@@ -145,7 +186,9 @@ const Home = () => {
               ) : (
                 <div className="no-products">
                   <p>
-                    {searchQuery ? `No products found for "${searchQuery}".` : "No products found."}
+                    {searchQuery
+                      ? `No products found for "${searchQuery}".`
+                      : "No products found."}
                   </p>
                   {searchQuery && (
                     <button
@@ -162,6 +205,7 @@ const Home = () => {
         </div>
       </div>
 
+      <SafetyFooter />
       <FloatingCartButton />
     </div>
   );

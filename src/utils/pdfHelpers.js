@@ -133,10 +133,212 @@ export const generateCataloguePDF = async (products, options = {}) => {
     yPosition += 75;
   }
 
-  // Removed overall total display for catalogue as requested
+  // Safety Precautions (append at the end)
+  const safetyBlockHeight = 60;
+  if (yPosition + safetyBlockHeight > pageHeight - 20) {
+    pdf.addPage();
+    yPosition = 20;
+  }
+  // Draw a small warning icon (yellow circle with !)
+  pdf.setFillColor(255, 235, 59); // yellow
+  pdf.setDrawColor(251, 140, 0); // amber border
+  pdf.circle(18, yPosition - 2, 4, "FD");
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFontSize(8);
+  pdf.text("!", 18, yPosition, { align: "center" });
 
-  // Footer (brand removed)
-  // Intentionally left blank
+  // Title
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text("Safety Precautions", 26, yPosition);
+  pdf.setFontSize(9);
+  pdf.setTextColor(90, 90, 90);
+  const safetyLines = [
+    "- Always read and follow all instructions on the label.",
+    "- Use fireworks outdoors in a clear, open area away from buildings and vehicles.",
+    "- Keep water (bucket/hose) nearby. Never relight a malfunctioning item.",
+    "- Maintain a safe distance. If a firework doesn't light, NEVER put your head above the exit point; wait 15 minutes, then soak it in water.",
+    "- Light one firework at a time and move back quickly.",
+    "- Never allow young children to handle fireworks; adult supervision is required.",
+    "- Do not point or throw fireworks at people, animals, or objects.",
+  ];
+  let lineY = yPosition + 8;
+  safetyLines.forEach((l) => {
+    pdf.text(l, 22, lineY);
+    lineY += 6;
+  });
+
+  // Simple caution diagram: tube exit point + unsafe head (X) and safe head (✓)
+  // Diagram origin
+  let dx = 22;
+  let dy = lineY + 6;
+
+  // Draw firework tube (rectangle)
+  pdf.setDrawColor(120, 120, 120);
+  pdf.setFillColor(230, 230, 230);
+  pdf.rect(dx, dy, 14, 28, "FD");
+
+  // Exit arrow (upwards)
+  pdf.setDrawColor(211, 47, 47);
+  // Arrow shaft
+  pdf.line(dx + 7, dy, dx + 7, dy - 12);
+  // Arrow head
+  pdf.line(dx + 7, dy - 12, dx + 4, dy - 8);
+  pdf.line(dx + 7, dy - 12, dx + 10, dy - 8);
+  pdf.setFontSize(8);
+  pdf.setTextColor(211, 47, 47);
+  pdf.text("EXIT", dx + 11, dy - 6);
+
+  // Unsafe head near exit (red X)
+  const badHeadX = dx + 28;
+  const badHeadY = dy - 6;
+  pdf.setDrawColor(244, 67, 54);
+  pdf.circle(badHeadX, badHeadY, 4);
+  // X mark
+  pdf.line(badHeadX - 3, badHeadY - 3, badHeadX + 3, badHeadY + 3);
+  pdf.line(badHeadX + 3, badHeadY - 3, badHeadX - 3, badHeadY + 3);
+  pdf.setTextColor(244, 67, 54);
+  pdf.text("DON'T", badHeadX - 7, badHeadY + 9);
+
+  // Safe head farther away (green check)
+  const goodHeadX = dx + 60;
+  const goodHeadY = dy + 8;
+  pdf.setDrawColor(76, 175, 80);
+  pdf.circle(goodHeadX, goodHeadY, 4);
+  // Check mark
+  pdf.line(goodHeadX - 2, goodHeadY + 1, goodHeadX - 0.5, goodHeadY + 3);
+  pdf.line(goodHeadX - 0.5, goodHeadY + 3, goodHeadX + 3, goodHeadY - 1);
+  pdf.setTextColor(76, 175, 80);
+  pdf.text("SAFE", goodHeadX - 6, goodHeadY + 9);
+
+  // Add comprehensive safety footer section (match SafetyFooter design)
+  // Always append as a brand new page at the end for clarity
+  pdf.addPage();
+  let footerY = 20;
+
+  // Header bar: yellow background with orange border and caution icon
+  const headerBarHeight = 16;
+  pdf.setFillColor(255, 215, 0); // #FFD700
+  pdf.setDrawColor(255, 165, 0); // #FFA500
+  pdf.rect(20, footerY, pageWidth - 40, headerBarHeight, "FD");
+
+  // Caution icon (yellow circle with exclamation) inside header bar
+  pdf.setFillColor(255, 215, 0);
+  pdf.setDrawColor(255, 165, 0);
+  pdf.circle(28, footerY + headerBarHeight / 2, 4, "FD");
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFontSize(9);
+  pdf.text("!", 28, footerY + headerBarHeight / 2 + 2, { align: "center" });
+
+  // Header title text
+  pdf.setFontSize(14);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text("Safety Notice", pageWidth / 2, footerY + headerBarHeight - 4, {
+    align: "center",
+  });
+
+  footerY += headerBarHeight + 8;
+
+  // Warning section: red banner with white text
+  const warnHeight = 16;
+  pdf.setFillColor(255, 107, 107); // #FF6B6B
+  pdf.setDrawColor(229, 62, 62); // #E53E3E
+  pdf.rect(20, footerY, pageWidth - 40, warnHeight, "FD");
+  pdf.setFontSize(10);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(
+    "Fireworks can be dangerous if not handled properly. Please read and follow all safety instructions.",
+    25,
+    footerY + warnHeight - 5
+  );
+
+  footerY += warnHeight + 8;
+
+  // Instructions block: yellow background, no border, simple bullet rows (single column)
+  const blockX = 20;
+  let blockY = footerY;
+  const blockW = pageWidth - 40;
+
+  // Title inside block
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+
+  // Single-column content
+  const items = [
+    "Always read the instructions on the firecracker pack before use",
+    "Maintain a safe distance from fireworks when lighting",
+    "Never put your head above the exit point of a firework",
+    "If a firework doesn't light, wait 15 minutes, then soak it in water",
+    "Keep water or a fire extinguisher nearby",
+    "Light fireworks in an open area away from buildings and trees",
+    'Never relight a "dud" firework',
+    "Supervise children at all times",
+    "Wear safety glasses when handling fireworks",
+    "Store fireworks in a cool, dry place",
+  ];
+  // Draw yellow background first so text remains visible
+  const padX = 6;
+  const padTop = 10;
+  const lineStep = 6;
+  pdf.setFillColor(255, 215, 0);
+  pdf.rect(blockX, blockY, blockW, pageHeight - 40 - blockY, "F");
+
+  // Title first
+  pdf.text("Important Safety Instructions:", blockX + padX, blockY + padTop);
+  let textY = blockY + padTop + 6;
+
+  pdf.setFontSize(9);
+  pdf.setTextColor(0, 0, 0);
+  const maxTextWidth = blockW - padX * 2;
+
+  items.forEach((t, i) => {
+    // If near page bottom, draw current background, add page, and continue
+    if (textY > pageHeight - 25) {
+      // new page
+      pdf.addPage();
+      // reset positions
+      blockY = 20;
+      // paint background for the new page section
+      pdf.setFillColor(255, 215, 0);
+      pdf.rect(blockX, blockY, blockW, pageHeight - 40 - blockY, "F");
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(
+        "Important Safety Instructions:",
+        blockX + padX,
+        blockY + padTop
+      );
+      textY = blockY + padTop + 6;
+      pdf.setFontSize(9);
+    }
+
+    const wrapped = pdf.splitTextToSize(`• ${t}`, maxTextWidth);
+    wrapped.forEach((line) => {
+      pdf.text(line, blockX + padX, textY);
+      textY += lineStep;
+    });
+    // extra gap between bullet points
+    textY += 2;
+  });
+
+  footerY = textY + 6;
+  if (footerY > pageHeight - 25) {
+    pdf.addPage();
+    footerY = 20;
+  }
+
+  // Agreement banner: yellow with orange border, bold text
+  const agreeH = 14;
+  pdf.setFillColor(255, 215, 0);
+  pdf.setDrawColor(255, 165, 0);
+  pdf.rect(20, footerY, pageWidth - 40, agreeH, "FD");
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text(
+    "By using this website/catalogue, you agree to our Terms & Conditions and acknowledge the safety instructions.",
+    25,
+    footerY + agreeH - 4
+  );
 
   pdf.save("Catalogue.pdf");
 };

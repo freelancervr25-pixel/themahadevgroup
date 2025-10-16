@@ -570,7 +570,14 @@ class ApiService {
       throw new Error(data?.message || "Failed to load orders");
     }
     if (String(data?.error).toLowerCase() !== "false") {
+      if ((data?.message || "").toLowerCase() === "logout") {
+        throw new Error("Logout");
+      }
       throw new Error(data?.message || "Failed to load orders");
+    }
+    // Support response with summary
+    if (Array.isArray(data.orders)) {
+      return { orders: data.orders, summary: data.summary || null };
     }
     return data.orders || [];
   }
@@ -605,6 +612,9 @@ class ApiService {
     }
 
     if (String(data?.error).toLowerCase() !== "false") {
+      if ((data?.message || "").toLowerCase() === "logout") {
+        throw new Error("Logout");
+      }
       // Attach details array if present
       const err = new Error(data?.message || "Failed to accept order");
       err.details = data?.details || [];
@@ -644,7 +654,49 @@ class ApiService {
     }
 
     if (String(data?.error).toLowerCase() !== "false") {
+      if ((data?.message || "").toLowerCase() === "logout") {
+        throw new Error("Logout");
+      }
       throw new Error(data?.message || "Failed to reject order");
+    }
+
+    return { orderId: data?.order_id, message: data?.message };
+  }
+
+  // Mark order as paid (status 3)
+  async markOrderPaid(orderId) {
+    const adminId = localStorage.getItem("adminId");
+    const adminAuthToken = localStorage.getItem("adminAuthToken");
+
+    if (!adminId || !adminAuthToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/paid_order";
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminAuthToken,
+        order_id: orderId,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to mark order as paid");
+    }
+
+    if (String(data?.error).toLowerCase() !== "false") {
+      if ((data?.message || "").toLowerCase() === "logout") {
+        throw new Error("Logout");
+      }
+      throw new Error(data?.message || "Failed to mark order as paid");
     }
 
     return { orderId: data?.order_id, message: data?.message };
