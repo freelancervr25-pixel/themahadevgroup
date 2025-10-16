@@ -501,6 +501,22 @@
   font-weight: bold;
 }
 
+/* Promo Preview */
+.promo-preview {
+  margin: 8px 0 12px 0;
+}
+
+.promo-save {
+  color: #757575;
+  font-size: 0.9rem;
+}
+
+.promo-net {
+  color: #2e7d32; /* green */
+  font-weight: 700;
+  margin-top: 2px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero-title {

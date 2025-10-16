@@ -45,6 +45,22 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
+        {/* 15% promo preview for all items */}
+        {(() => {
+          const basePrice = Number(product.price || 0);
+          const percent = 15;
+          const amount = (basePrice * percent) / 100;
+          const net = Math.max(0, basePrice - amount);
+          return (
+            <div className="promo-preview">
+              <div className="promo-save">
+                Save {percent}%: ₹{amount.toFixed(2)}
+              </div>
+              <div className="promo-net">You pay: ₹{net.toFixed(2)}</div>
+            </div>
+          );
+        })()}
+
         <div className="product-stock">Stock: {product.stock} units</div>
 
         {cartItem ? (

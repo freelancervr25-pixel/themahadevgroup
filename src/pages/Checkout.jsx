@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectCartItems,
@@ -233,6 +233,19 @@ const Checkout = () => {
     }
   };
 
+  // Client-side coupon preview for known 15% codes
+  const previewCoupon = useMemo(() => {
+    const known = ["vishnu331", "firstsale15", "aditya311"]; // case-insensitive
+    const code = (promoCode || "").trim().toLowerCase();
+    if (!orderPlaced && code && known.includes(code)) {
+      const percent = 15;
+      const amount = (totalPrice * percent) / 100;
+      const net = Math.max(0, totalPrice - amount);
+      return { percent, amount, net };
+    }
+    return null;
+  }, [promoCode, totalPrice, orderPlaced]);
+
   if (cartItems.length === 0) {
     return (
       <div className="checkout-page">
@@ -381,6 +394,25 @@ const Checkout = () => {
               <div className="total-label">Total:</div>
               <div className="total-amount">₹{totalPrice.toFixed(2)}</div>
             </div>
+
+            {/* Preview discount before ordering if coupon matches known list */}
+            {!orderPlaced && previewCoupon && (
+              <>
+                <div className="total-section" style={{ marginTop: 8 }}>
+                  <div className="total-label">Discount (preview):</div>
+                  <div className="total-amount">
+                    {previewCoupon.percent}% (₹{previewCoupon.amount.toFixed(2)}
+                    )
+                  </div>
+                </div>
+                <div className="total-section" style={{ marginTop: 4 }}>
+                  <div className="total-label">Net Total (preview):</div>
+                  <div className="total-amount">
+                    ₹{previewCoupon.net.toFixed(2)}
+                  </div>
+                </div>
+              </>
+            )}
             {discountInfo && (
               <>
                 <div className="total-section" style={{ marginTop: 8 }}>
@@ -435,7 +467,7 @@ const Checkout = () => {
                 className="download-pdf-button"
                 onClick={handleDownloadOrderPDF}
               >
-                📥 Download PDF
+                🧾 Order and Download PDF
               </button>
               <button className="clear-cart-button" onClick={handleClearCart}>
                 🧹 Clear Cart

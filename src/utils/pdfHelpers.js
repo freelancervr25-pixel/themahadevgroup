@@ -108,6 +108,24 @@ export const generateCataloguePDF = async (products, options = {}) => {
       yPosition + 30
     );
 
+    // Possible 15% discount preview per item
+    const basePrice = Number(product.price || 0);
+    const discountPercent = 15;
+    const discountAmount = (basePrice * discountPercent) / 100;
+    const netPrice = Math.max(0, basePrice - discountAmount);
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(120, 120, 120);
+    pdf.text(
+      `Save ${discountPercent}%: Rs ${discountAmount.toFixed(2)}`,
+      textX,
+      yPosition + 40
+    );
+
+    pdf.setFontSize(12);
+    pdf.setTextColor(46, 125, 50); // green
+    pdf.text(`You pay: Rs ${netPrice.toFixed(2)}`, textX, yPosition + 50);
+
     pdf.setDrawColor(230, 230, 230);
     pdf.line(20, yPosition + 65, pageWidth - 20, yPosition + 65);
 
