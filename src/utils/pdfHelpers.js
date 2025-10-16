@@ -44,21 +44,29 @@ export const imageToBase64 = (url) => {
 };
 
 // Generate Full Catalogue PDF
-export const generateCataloguePDF = async (products) => {
+export const generateCataloguePDF = async (products, options = {}) => {
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  // Header
-  pdf.setFontSize(20);
-  pdf.setTextColor(211, 47, 47); // Red color
-  pdf.text("Fireworks Store", pageWidth / 2, 20, { align: "center" });
-
+  // Header (brand removed)
   pdf.setFontSize(16);
   pdf.setTextColor(251, 192, 45); // Gold color
-  pdf.text("Full Catalogue", pageWidth / 2, 30, { align: "center" });
+  pdf.text("Full Catalogue", pageWidth / 2, 20, { align: "center" });
 
-  let yPosition = 40;
+  // Optional coupon mention
+  const couponCode = options.couponCode || "FIRSTSALE15";
+  const couponPercent = options.couponPercent || 15;
+  pdf.setFontSize(11);
+  pdf.setTextColor(211, 47, 47);
+  pdf.text(
+    `Use code ${couponCode} for extra ${couponPercent}% OFF`,
+    pageWidth / 2,
+    27,
+    { align: "center" }
+  );
+
+  let yPosition = 35;
   let catalogueTotal = 0;
   for (let i = 0; i < products.length; i++) {
     const product = products[i] || {};
@@ -107,17 +115,10 @@ export const generateCataloguePDF = async (products) => {
 
   // Removed overall total display for catalogue as requested
 
-  // Footer
-  pdf.setFontSize(10);
-  pdf.setTextColor(100, 100, 100);
-  pdf.text(
-    "Thank you for choosing Fireworks Store!",
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: "center" }
-  );
+  // Footer (brand removed)
+  // Intentionally left blank
 
-  pdf.save("Fireworks_Store_Catalogue.pdf");
+  pdf.save("Catalogue.pdf");
 };
 
 // Generate Order PDF
@@ -131,27 +132,23 @@ export const generateOrderPDF = async (
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  // Header
-  pdf.setFontSize(20);
-  pdf.setTextColor(211, 47, 47);
-  pdf.text("Fireworks Store", pageWidth / 2, 20, { align: "center" });
-
+  // Header (brand removed)
   pdf.setFontSize(16);
   pdf.setTextColor(251, 192, 45);
-  pdf.text("Order Summary", pageWidth / 2, 30, { align: "center" });
+  pdf.text("Order Summary", pageWidth / 2, 20, { align: "center" });
 
   // Customer Info
   pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(`Customer Name: ${customerInfo.name}`, 20, 50);
-  pdf.text(`Mobile: ${customerInfo.mobile}`, 20, 60);
-  pdf.text(`Order Date: ${new Date().toLocaleString()}`, 20, 70);
+  pdf.text(`Customer Name: ${customerInfo.name}`, 20, 40);
+  pdf.text(`Mobile: ${customerInfo.mobile}`, 20, 50);
+  pdf.text(`Order Date: ${new Date().toLocaleString()}`, 20, 60);
 
   // Line separator
   pdf.setDrawColor(211, 47, 47);
-  pdf.line(20, 80, pageWidth - 20, 80);
+  pdf.line(20, 70, pageWidth - 20, 70);
 
-  let yPosition = 90;
+  let yPosition = 80;
 
   // Optional coupon/discount block
   if (options && (options.couponApplied || options.coupon_code)) {
@@ -258,17 +255,10 @@ export const generateOrderPDF = async (
     });
   }
 
-  // Footer
-  pdf.setFontSize(10);
-  pdf.setTextColor(100, 100, 100);
-  pdf.text(
-    "Thank you for shopping with Fireworks Store!",
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: "center" }
-  );
+  // Footer (brand removed)
+  // Intentionally left blank
 
-  const fileName = `Order_${customerInfo.name}_${
+  const fileName = `Order_${customerInfo.name}_$${
     new Date().toISOString().split("T")[0]
   }.pdf`;
   pdf.save(fileName);
