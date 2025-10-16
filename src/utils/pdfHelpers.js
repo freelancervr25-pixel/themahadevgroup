@@ -54,19 +54,21 @@ export const generateCataloguePDF = async (products, options = {}) => {
   pdf.setTextColor(251, 192, 45); // Gold color
   pdf.text("Full Catalogue", pageWidth / 2, 20, { align: "center" });
 
-  // Optional coupon mention
-  const couponCode = options.couponCode || "FIRSTSALE15";
-  const couponPercent = options.couponPercent || 15;
-  pdf.setFontSize(11);
-  pdf.setTextColor(211, 47, 47);
-  pdf.text(
-    `Use code ${couponCode} for extra ${couponPercent}% OFF`,
-    pageWidth / 2,
-    27,
-    { align: "center" }
-  );
+  // Promo note (bigger + highlighted banner)
+  const promoText = "Get extra 15% OFF on total";
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(14);
+  // Draw a light highlight banner behind the text
+  const bannerY = 32; // moved down
+  const bannerH = 10;
+  pdf.setFillColor(255, 248, 225); // light yellow
+  pdf.rect(20, bannerY - 7, pageWidth - 40, bannerH + 4, "F");
+  pdf.setTextColor(211, 47, 47); // red text
+  pdf.text(promoText, pageWidth / 2, bannerY, { align: "center" });
+  // Reset font weight
+  pdf.setFont("helvetica", "normal");
 
-  let yPosition = 35;
+  let yPosition = 45; // push content further down
   let catalogueTotal = 0;
   for (let i = 0; i < products.length; i++) {
     const product = products[i] || {};

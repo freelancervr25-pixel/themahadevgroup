@@ -36,6 +36,9 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-title {
@@ -79,6 +82,51 @@
   padding: 10px 14px;
   border-radius: 8px;
   font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  /* Ensure initial entrance + continuous effects */
+  animation:
+    fadeInUp 0.8s ease-out both,
+    pulseGlow 2s ease-in-out 0.8s infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+/* Keep button and coupon stacked with spacing */
+.catalogue-button + .coupon-highlight {
+  margin-top: 12px;
+}
+
+/* Reinforce column on small screens */
+@media (max-width: 768px) {
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Pulse glow effect around the coupon chip */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0px rgba(251, 192, 45, 0.0); transform: translateY(0); }
+  50% { box-shadow: 0 0 14px rgba(251, 192, 45, 0.6); transform: translateY(-1px); }
+}
+
+/* Shimmer sweep highlight */
+.coupon-highlight::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform: skewX(-20deg);
+  animation: sweep 2.5s 0.8s infinite;
+}
+
+@keyframes sweep {
+  0% { left: -60%; }
+  100% { left: 120%; }
 }
 
 @keyframes fadeInUp {
