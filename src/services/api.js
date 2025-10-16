@@ -543,6 +543,113 @@ class ApiService {
     return data.order_summary || data.data || data;
   }
 
+  // Load orders for admin
+  async loadOrders() {
+    const adminId = localStorage.getItem("adminId");
+    const adminAuthToken = localStorage.getItem("adminAuthToken");
+
+    if (!adminId || !adminAuthToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/load_orders";
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminAuthToken,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to load orders");
+    }
+    if (String(data?.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Failed to load orders");
+    }
+    return data.orders || [];
+  }
+
+  // Accept order (admin)
+  async acceptOrder(orderId) {
+    const adminId = localStorage.getItem("adminId");
+    const adminAuthToken = localStorage.getItem("adminAuthToken");
+
+    if (!adminId || !adminAuthToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/accept_order";
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminAuthToken,
+        order_id: orderId,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to accept order");
+    }
+
+    if (String(data?.error).toLowerCase() !== "false") {
+      // Attach details array if present
+      const err = new Error(data?.message || "Failed to accept order");
+      err.details = data?.details || [];
+      throw err;
+    }
+
+    return { orderId: data?.order_id, message: data?.message };
+  }
+
+  // Reject order (admin)
+  async rejectOrder(orderId) {
+    const adminId = localStorage.getItem("adminId");
+    const adminAuthToken = localStorage.getItem("adminAuthToken");
+
+    if (!adminId || !adminAuthToken) {
+      throw new Error("Missing admin credentials. Please login again.");
+    }
+
+    const endpoint = "https://simplysales.postick.co.in/mahadev/reject_order";
+    const payload = {
+      data: {
+        admin_id: adminId,
+        authtoken: adminAuthToken,
+        order_id: orderId,
+      },
+    };
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data?.message || "Failed to reject order");
+    }
+
+    if (String(data?.error).toLowerCase() !== "false") {
+      throw new Error(data?.message || "Failed to reject order");
+    }
+
+    return { orderId: data?.order_id, message: data?.message };
+  }
+
   // Get product by ID
   async getProductById(productId) {
     const response = await this.request(

@@ -5,7 +5,6 @@ import {
   selectProductsLoading,
   selectProductsError,
   loadProductsAsync,
-  searchProductsAsync,
 } from "../store/productsSlice";
 import { generateCataloguePDF } from "../utils/pdfHelpers";
 import apiService from "../services/api";
@@ -19,11 +18,24 @@ const Home = () => {
   const loading = useSelector(selectProductsLoading);
   const error = useSelector(selectProductsError);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
     // Load products from API on component mount
     dispatch(loadProductsAsync());
   }, [dispatch]);
+
+  // Local search effect - filter products by name as user types
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [products, searchQuery]);
 
   const handleDownloadCatalogue = async () => {
     try {
@@ -41,19 +53,12 @@ const Home = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      dispatch(searchProductsAsync(searchQuery.trim()));
-    } else {
-      // If search is empty, reload all products
-      dispatch(loadProductsAsync());
-    }
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleClearSearch = () => {
     setSearchQuery("");
-    dispatch(loadProductsAsync());
   };
 
   return (
@@ -87,18 +92,15 @@ const Home = () => {
             <h2 className="section-title">Our Products</h2>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="search-form">
+            <div className="search-form">
               <div className="search-container">
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="search-input"
                 />
-                <button type="submit" className="search-button">
-                  🔍
-                </button>
                 {searchQuery && (
                   <button
                     type="button"
@@ -109,7 +111,7 @@ const Home = () => {
                   </button>
                 )}
               </div>
-            </form>
+            </div>
           </div>
 
           {/* Loading State */}
@@ -136,13 +138,15 @@ const Home = () => {
           {/* Products Grid */}
           {!loading && !error && (
             <div className="products-grid">
-              {products.length > 0 ? (
-                products.map((product) => (
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))
               ) : (
                 <div className="no-products">
-                  <p>No products found.</p>
+                  <p>
+                    {searchQuery ? `No products found for "${searchQuery}".` : "No products found."}
+                  </p>
                   {searchQuery && (
                     <button
                       onClick={handleClearSearch}

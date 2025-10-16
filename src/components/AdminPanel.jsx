@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logoutAsync } from "../store/authSlice";
@@ -10,6 +10,8 @@ import {
   createProductAsync,
   deleteProductAsync,
   loadAdminProductsAsync,
+  loadOrdersAsync,
+  selectAllOrders,
 } from "../store/productsSlice";
 import { fileToBase64, validateImageFile } from "../utils/base64Helper";
 import {
@@ -19,12 +21,14 @@ import {
 } from "../utils/imageCompression";
 import ProductImage from "./ProductImage";
 import "../styles/admin.css";
+import apiService from "../services/api";
 
 const AdminPanel = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isLoggedIn, adminUser } = useSelector((state) => state.auth);
   const products = useSelector((state) => state.products.products);
+  const orders = useSelector(selectAllOrders);
 
   const [activeTab, setActiveTab] = useState("products");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -41,8 +45,10 @@ const AdminPanel = () => {
   const [removeImage, setRemoveImage] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState(null);
   const [errors, setErrors] = useState({});
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoggedIn) {
       navigate("/admin-login");
       return;
@@ -50,6 +56,32 @@ const AdminPanel = () => {
     // Load products after admin login using admin credentials context
     dispatch(loadAdminProductsAsync());
   }, [isLoggedIn, navigate, dispatch]);
+
+  // Load orders when orders tab is active
+  useEffect(() => {
+    if (activeTab === "orders" && isLoggedIn) {
+      dispatch(loadOrdersAsync());
+    }
+  }, [activeTab, isLoggedIn, dispatch]);
+
+  // Filter products based on search query
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(productSearchQuery.toLowerCase())
+  );
+
+  // Filter orders based on search query
+  const filteredOrders = orders.filter(
+    (order) =>
+      order.user_name.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+      order.user_mobile.includes(orderSearchQuery) ||
+      order.id.toString().includes(orderSearchQuery) ||
+      (order.coupon_code &&
+        order.coupon_code
+          .toLowerCase()
+          .includes(orderSearchQuery.toLowerCase()))
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,6 +96,56 @@ const AdminPanel = () => {
         ...prev,
         [name]: "",
       }));
+    }
+  };
+
+  const handleAcceptOrder = async (orderId) => {
+    if (
+      window.confirm(
+        "✅ Are you sure you want to ACCEPT this order?\n\nThis will:\n• Update order status to 'Completed'\n• Deduct stock from inventory\n• Cannot be undone"
+      )
+    ) {
+      try {
+        const result = await apiService.acceptOrder(orderId);
+        alert("✅ " + (result.message || "Order accepted successfully!"));
+        // Refresh orders after accepting
+        dispatch(loadOrdersAsync());
+      } catch (error) {
+        if (
+          error?.details &&
+          Array.isArray(error.details) &&
+          error.details.length > 0
+        ) {
+          alert(
+            `❌ ${error.message}\n\nStock Issues:\n- ${error.details.join(
+              "\n- "
+            )}`
+          );
+        } else {
+          alert(
+            "❌ Error accepting order: " + (error.message || "Unknown error")
+          );
+        }
+      }
+    }
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    if (
+      window.confirm(
+        "❌ Are you sure you want to REJECT this order?\n\nThis will:\n• Update order status to 'Cancelled'\n• NOT deduct stock from inventory\n• Cannot be undone"
+      )
+    ) {
+      try {
+        const result = await apiService.rejectOrder(orderId);
+        alert("❌ " + (result.message || "Order rejected successfully!"));
+        // Refresh orders after rejecting
+        dispatch(loadOrdersAsync());
+      } catch (error) {
+        alert(
+          "❌ Error rejecting order: " + (error.message || "Unknown error")
+        );
+      }
     }
   };
 
@@ -283,17 +365,41 @@ const AdminPanel = () => {
         {/* Admin Section Header */}
         <div className="admin-tabs">
           <button
-            className={`admin-tab active`}
+            className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
             onClick={() => setActiveTab("products")}
           >
             📦 Products ({products.length})
           </button>
+          <button
+            className={`admin-tab ${activeTab === "orders" ? "active" : ""}`}
+            onClick={() => setActiveTab("orders")}
+          >
+            📋 Orders ({orders.length})
+          </button>
         </div>
 
-        {/* Products Content */}
-        {
+        {/* Content based on active tab */}
+        {activeTab === "products" && (
           <>
             <div className="admin-actions-bar">
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search products by name or category..."
+                  value={productSearchQuery}
+                  onChange={(e) => setProductSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                {productSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setProductSearchQuery("")}
+                    className="clear-search-button"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
               <button
                 className="add-product-button"
                 onClick={() => {
@@ -535,65 +641,262 @@ const AdminPanel = () => {
             )}
 
             <div className="products-list">
-              <h2>Products ({products.length})</h2>
+              <h2>Products ({filteredProducts.length})</h2>
               <div className="products-grid">
-                {products.map((product) => (
-                  <div key={product.id} className="admin-product-card">
-                    <div className="product-image">
-                      <ProductImage
-                        src={product.image}
-                        alt={product.name}
-                        onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/200x200/d32f2f/ffffff?text=Firework";
-                        }}
-                      />
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <div key={product.id} className="admin-product-card">
+                      <div className="product-image">
+                        <ProductImage
+                          src={product.image}
+                          alt={product.name}
+                          onError={(e) => {
+                            e.target.src =
+                              "https://via.placeholder.com/200x200/d32f2f/ffffff?text=Firework";
+                          }}
+                        />
+                      </div>
+
+                      <div className="product-details">
+                        <h3>{product.name}</h3>
+                        <p className="product-description">
+                          {product.description}
+                        </p>
+
+                        <div className="product-pricing">
+                          <span className="current-price">
+                            ₹{product.price}
+                          </span>
+                          <span className="original-price">
+                            ₹{product.originalPrice}
+                          </span>
+                        </div>
+
+                        <div className="product-stock">
+                          Stock: {product.stock} units
+                        </div>
+                      </div>
+
+                      <div className="product-actions">
+                        {product.status === "deleted" ? (
+                          <span className="deleted-label">Deleted</span>
+                        ) : (
+                          <>
+                            <button
+                              className="edit-button"
+                              onClick={() => handleEdit(product)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              className="delete-button"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="no-products">
+                    <p>
+                      {productSearchQuery
+                        ? `No products found for "${productSearchQuery}".`
+                        : "No products found."}
+                    </p>
+                    {productSearchQuery && (
+                      <button
+                        onClick={() => setProductSearchQuery("")}
+                        className="clear-search-button"
+                      >
+                        Clear Search
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
-                    <div className="product-details">
-                      <h3>{product.name}</h3>
-                      <p className="product-description">
-                        {product.description}
-                      </p>
+        {/* Orders Content */}
+        {activeTab === "orders" && (
+          <div className="orders-section">
+            <div className="orders-header">
+              <h2>Orders ({filteredOrders.length})</h2>
+              <div className="orders-actions">
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Search orders by name, mobile, ID, or coupon..."
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                  {orderSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderSearchQuery("")}
+                      className="clear-search-button"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <button
+                  className="refresh-button"
+                  onClick={() => dispatch(loadOrdersAsync())}
+                >
+                  🔄 Refresh
+                </button>
+              </div>
+            </div>
 
-                      <div className="product-pricing">
-                        <span className="current-price">₹{product.price}</span>
-                        <span className="original-price">
-                          ₹{product.originalPrice}
+            {filteredOrders.length === 0 ? (
+              <div className="no-orders">
+                <p>
+                  {orderSearchQuery
+                    ? `No orders found for "${orderSearchQuery}".`
+                    : "No orders found."}
+                </p>
+                {orderSearchQuery && (
+                  <button
+                    onClick={() => setOrderSearchQuery("")}
+                    className="clear-search-button"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="orders-list">
+                {filteredOrders.map((order) => (
+                  <div key={order.id} className="order-card">
+                    <div className="order-header">
+                      <div className="order-info">
+                        <h3>Order #{order.id}</h3>
+                        <p className="order-date">
+                          {new Date(
+                            order.created_at || order.date
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="order-status">
+                        <span
+                          className={`status-badge ${
+                            order.status === "1"
+                              ? "completed"
+                              : order.status === "0"
+                              ? "pending"
+                              : order.status === "2"
+                              ? "cancelled"
+                              : "cancelled"
+                          }`}
+                        >
+                          {order.status === "1"
+                            ? "Completed"
+                            : order.status === "0"
+                            ? "Pending"
+                            : order.status === "2"
+                            ? "Rejected"
+                            : "Cancelled"}
                         </span>
-                      </div>
-
-                      <div className="product-stock">
-                        Stock: {product.stock} units
+                        {order.status === "0" && (
+                          <div className="order-actions">
+                            <button
+                              className="accept-order-button"
+                              onClick={() => handleAcceptOrder(order.id)}
+                            >
+                              ✅ Accept Order
+                            </button>
+                            <button
+                              className="reject-order-button"
+                              onClick={() => handleRejectOrder(order.id)}
+                            >
+                              ❌ Reject Order
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="product-actions">
-                      {product.status === "deleted" ? (
-                        <span className="deleted-label">Deleted</span>
-                      ) : (
-                        <>
-                          <button
-                            className="edit-button"
-                            onClick={() => handleEdit(product)}
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            className="delete-button"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            🗑️ Delete
-                          </button>
-                        </>
-                      )}
+                    <div className="order-details">
+                      <div className="customer-info">
+                        <h4>Customer Details</h4>
+                        <p>
+                          <strong>Name:</strong> {order.user_name || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Mobile:</strong> {order.user_mobile || "N/A"}
+                        </p>
+                        {order.coupon_code &&
+                          order.discount_amount &&
+                          parseFloat(order.discount_amount) > 0 && (
+                            <p>
+                              <strong>Coupon Applied:</strong>{" "}
+                              {order.coupon_code}
+                            </p>
+                          )}
+                      </div>
+
+                      <div className="order-items">
+                        <h4>Items ({order.cart_items?.length || 0})</h4>
+                        {order.cart_items && order.cart_items.length > 0 ? (
+                          <div className="items-list">
+                            {order.cart_items.map((item, index) => (
+                              <div key={index} className="order-item">
+                                <span className="item-name">{item.name}</span>
+                                <span className="item-qty">
+                                  Qty: {item.qty}
+                                </span>
+                                <span className="item-price">
+                                  Rs {item.price}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>No items found</p>
+                        )}
+                      </div>
+
+                      <div className="order-totals">
+                        <h4>Order Summary</h4>
+                        <p>
+                          <strong>Subtotal:</strong> Rs{" "}
+                          {order.total_amount || 0}
+                        </p>
+                        {order.discount_amount &&
+                          parseFloat(order.discount_amount) > 0 && (
+                            <>
+                              <p className="discount-info">
+                                <strong>
+                                  Discount ({order.discount_percent || 0}%):
+                                </strong>{" "}
+                                -Rs {order.discount_amount}
+                              </p>
+                              <p className="net-total">
+                                <strong>Net Total:</strong> Rs{" "}
+                                {order.net_amount || order.total_amount || 0}
+                              </p>
+                            </>
+                          )}
+                        {(!order.discount_amount ||
+                          parseFloat(order.discount_amount) === 0) && (
+                          <p>
+                            <strong>Total:</strong> Rs {order.total_amount || 0}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </>
-        }
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import apiService from "../services/api";
 const initialState = {
   products: [],
   categories: [],
+  orders: [],
   loading: false,
   error: null,
   nextId: 7,
@@ -136,6 +137,19 @@ export const loadAdminProductsAsync = createAsyncThunk(
     try {
       const response = await apiService.loadAdminProducts();
       return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Load orders for admin
+export const loadOrdersAsync = createAsyncThunk(
+  "products/loadOrders",
+  async (_, { rejectWithValue }) => {
+    try {
+      const orders = await apiService.loadOrders();
+      return orders;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -342,6 +356,20 @@ const productsSlice = createSlice({
       .addCase(loadAdminProductsAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Load orders
+      .addCase(loadOrdersAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadOrdersAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload || [];
+        state.error = null;
+      })
+      .addCase(loadOrdersAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
@@ -365,5 +393,6 @@ export const selectDeletedCategories = (state) =>
   state.products.categories.filter((category) => category.deleted);
 export const selectProductsLoading = (state) => state.products.loading;
 export const selectProductsError = (state) => state.products.error;
+export const selectAllOrders = (state) => state.products.orders;
 
 export default productsSlice.reducer;
