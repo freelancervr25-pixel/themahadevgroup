@@ -87,7 +87,8 @@ class ApiService {
   // Admin login
   async adminLogin(credentials) {
     // Endpoint: use proxy in dev to avoid CORS, absolute in prod
-    const endpoint = "https://simplysales.postick.co.in/mahadev/login";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/login";
 
     // Send exact JSON structure required by backend
     const payload = {
@@ -143,7 +144,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/load_product";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/load_product";
 
     const body = {
       data: {
@@ -205,7 +207,8 @@ class ApiService {
 
   // Load active products for Home (public, no auth)
   async loadHomeProducts() {
-    const endpoint = "https://simplysales.postick.co.in/mahadev/home_products";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/home_products";
 
     const resp = await fetch(endpoint, {
       method: "POST",
@@ -376,7 +379,7 @@ class ApiService {
 
     const endpoint = import.meta.env?.DEV
       ? "/mahadev/add_product"
-      : "https://simplysales.postick.co.in/mahadev/add_product";
+      : "https://themahadevgroupv2back.onrender.com/api/mahadev/add_product";
 
     // Map frontend fields to backend expected keys
     const payload = {
@@ -434,7 +437,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/edit_product";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/edit_product";
 
     // Build payload; only include image if explicitly provided (base64 or null means remove not supported here)
     const data = {
@@ -498,7 +502,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/delete_product";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/delete_product";
     const payload = {
       data: {
         admin_id: adminId,
@@ -524,7 +529,8 @@ class ApiService {
 
   // Create order (public endpoint)
   async createOrder({ userName, userMobile, couponCode, cartItems }) {
-    const endpoint = "https://simplysales.postick.co.in/mahadev/create_order";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/create_order";
 
     // Send raw JSON with { data: {...} } so PHP can read $_POST['data'] after json_decode
     const payload = {
@@ -565,7 +571,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/load_orders";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/load_orders";
     const payload = {
       data: {
         admin_id: adminId,
@@ -604,7 +611,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/accept_order";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/accept_order";
     const payload = {
       data: {
         admin_id: adminId,
@@ -646,7 +654,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/reject_order";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/reject_order";
     const payload = {
       data: {
         admin_id: adminId,
@@ -685,7 +694,8 @@ class ApiService {
       throw new Error("Missing admin credentials. Please login again.");
     }
 
-    const endpoint = "https://simplysales.postick.co.in/mahadev/paid_order";
+    const endpoint =
+      "https://themahadevgroupv2back.onrender.com/api/mahadev/paid_order";
     const payload = {
       data: {
         admin_id: adminId,

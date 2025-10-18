@@ -12,6 +12,12 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/mahadev/, "/mahadev"),
       },
+      "/api": {
+        target: "https://themahadevgroupv2back.onrender.com",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, "/api"),
+      },
     },
   },
 });
